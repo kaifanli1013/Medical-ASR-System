@@ -384,6 +384,13 @@ parser.add_argument('--nllb_model_dir', type=str, default=os.path.join("models",
 parser.add_argument('--output_dir', type=str, default=os.path.join("outputs"), help='Directory path of the outputs')
 _args = parser.parse_args()
 
+theme = gr.themes.Base(
+    primary_hue="indigo",
+    secondary_hue="sky",
+    neutral_hue="slate",
+)
+
 if __name__ == "__main__":
+    _args.theme = theme
     app = App(args=_args)
     app.launch()

@@ -1,14 +1,14 @@
 import random
 import gradio as gr
 
-def chat(message):
+def chat(message, history):
     history = history or []
     message = message.lower()
-    if message.startwith("how many"):
+    if message.startswith("how many"):
         response = random.randint(1, 10)
-    elif message.startwith("how"):
+    elif message.startswith("how"):
         response = random.choice(["Great", "Good", "Okay", "Bad"])
-    elif message.startwith("where"):
+    elif message.startswith("where"):
         response = random.choice(["Here", "There", "Somewhere"])
     else:
         response = "I don't know"
@@ -17,6 +17,7 @@ def chat(message):
 
 if __name__ == "__main__":
     chatbot = gr.Chatbot() # .style(color_map=("green", "pink"))
+    chatbot.style(message_color="green", response_color="pink")
     demo = gr.Interface(
         chat,
         ["text", "state"],
