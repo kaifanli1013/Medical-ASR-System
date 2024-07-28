@@ -50,7 +50,8 @@ if __name__ == "__main__":
     
     params = {
         "text": "最近お腹が痛くて、時々熱もあります。",  # 示例医学文本
-        "category": "medication"  # 可选参数
+        "category": "disease",  # 可选参数
+        "min_reliability": "C"
     }
 
     # 调用/norms端点
