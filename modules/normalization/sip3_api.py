@@ -1,9 +1,9 @@
 import requests
+import pysrt
+import os
+import gradio as gr
 
-# SIP3 API URL
-sip3_url = "https://nlp.sociocom.jp/sip3/api/"
-
-class SPI3API:
+class SIP3API:
     def __init__(self, base_url):
         
         self.base_url = base_url
@@ -43,10 +43,95 @@ class SPI3API:
             print("Error Message:", response.text)
             return None            
         
+    def standardize_subtitle_file(self,
+                                 files_subtitles: list,
+                                 progress=gr.Progress()) -> list:
+        """
+        Standardize subtitle file from generated subtitles
+
+        Parameters
+        ----------
+        files_subtitles: list
+            List of generated subtitle files from gr.Files()
+        progress: gr.Progress
+            Indicator to show progress directly in gradio.
+
+        Returns
+        ----------
+        standardized_result_str:
+            Result of standardization to return to gr.Textbox()
+        standardized_result_file_path:
+            Output file path to return to gr.Files()
+        """
+        try:
+            files_info = {}
+            for file in files_subtitles:
+                subtitle_path = file.name
+                subs = pysrt.open(subtitle_path)
+
+                standardized_texts = []
+                for sub in subs:
+                    params = {
+                        "text": sub.text,
+                        "category": "disease",
+                        # "min_reliability": "C"
+                    }
+                    # print(f"Calling SIP3 API with params: {params}")
+                    try:
+                        standardized_entities = self.api_call("norms", params)
+                        # print(f"Received response: {standardized_entities}")
+                    except Exception as api_error:
+                        # print(f"API call error: {api_error}")
+                        return [f"API call error: {api_error}", None]
+
+                    if not standardized_entities:
+                        # print(f"API returned no entities for text: {sub.text}")
+                        standardized_texts.append(sub.text)
+                        continue
+                    
+                    # 初始化 standardized_text
+                    standardized_text = sub.text
+                    
+                    # 替换文本中的实体为标准化名称
+                    for entity in standardized_entities:
+                        standardized_text = standardized_text.replace(entity['text'], entity['standard_name'][0])
+                    
+                    standardized_texts.append(standardized_text)
+
+                result_texts = []
+                for sub, standardized_text in zip(subs, standardized_texts):
+                    result_texts.append(f"{sub.index}\n{sub.start} --> {sub.end}\n{standardized_text}\n")
+
+                new_subtitle_path = subtitle_path.replace(".srt", "_standardized.srt")
+                with open(new_subtitle_path, 'w', encoding='utf-8') as f:
+                    f.writelines(result_texts)
+
+                files_info[os.path.basename(subtitle_path)] = {
+                    "standardized_texts": "\n".join(result_texts),
+                    "path": new_subtitle_path
+                }
+
+            total_result = ''
+            for file_name, info in files_info.items():
+                total_result += '------------------------------------\n'
+                total_result += f'{file_name}\n\n'
+                total_result += f'{info["standardized_texts"]}'
+
+            standardized_result_str = f"Standardization completed.\n\n{total_result}"
+            standardized_result_file_path = [info['path'] for info in files_info.values()]
+
+            print(f'{standardized_result_str=}')
+            print(f'{standardized_result_file_path=}')
+            
+            return [standardized_result_str, standardized_result_file_path]
+
+        except Exception as e:
+            print(f"Error standardizing file: {e}")
+
         
 if __name__ == "__main__":
     base_url = "https://nlp.sociocom.jp/sip3/api/"
-    sip3_api = SPI3API(base_url)
+    sip3_api = SIP3API(base_url)
     
     params = {
         "text": "最近お腹が痛くて、時々熱もあります。",  # 示例医学文本

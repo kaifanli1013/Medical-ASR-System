@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import argparse
 import gradio as gr
 
@@ -11,7 +11,7 @@ from ui.htmls import *
 from modules.utils.youtube_manager import get_ytmetas
 from modules.translation.deepl_api import DeepLAPI
 from modules.whisper.whisper_parameter import *
-
+from modules.normalization.sip3_api import SIP3API
 
 class App:
     def __init__(self, args):
@@ -27,6 +27,7 @@ class App:
         self.deepl_api = DeepLAPI(
             output_dir=os.path.join(self.args.output_dir, "translations")
         )
+        self.sip3_api = SIP3API(base_url="https://nlp.sociocom.jp/sip3/api/")
 
     def init_whisper(self):
         # Temporal fix of the issue : https://github.com/jhj0517/Whisper-WebUI/issues/144
@@ -206,39 +207,55 @@ class App:
                         files_subtitles = gr.Files(label="Downloadable output file", scale=3, interactive=False)
                         btn_openfolder = gr.Button('📂', scale=1)
 
+                    with gr.Row():
+                        # 添加标准化按钮
+                        btn_standardize = gr.Button("STANDARDIZED SUBTITLE FILE", variant="primary")
+                    with gr.Row():
+                        tb_indicator_standardized = gr.Textbox(label="Standardized Output", scale=5)
+                        files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
+                        btn_openfolder_standardized = gr.Button('📂', scale=1)
+                        
                     params = [input_file, tb_input_folder, dd_file_format, cb_timestamp]
                     btn_run.click(fn=self.whisper_inf.transcribe_file,
                                   inputs=params + whisper_params.as_list(),
                                   outputs=[tb_indicator, files_subtitles])
                     btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
+                    btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
+                    
+                    # 添加标准化按钮的点击事件
+                    btn_standardize.click(
+                        fn=self.sip3_api.standardize_subtitle_file,
+                        inputs=[files_subtitles],
+                        outputs=[tb_indicator_standardized, files_subtitles_standardized],
+                    )
 
-                with gr.TabItem("Youtube"):  # tab2
-                    with gr.Row():
-                        tb_youtubelink = gr.Textbox(label="Youtube Link")
-                    with gr.Row(equal_height=True):
-                        with gr.Column():
-                            img_thumbnail = gr.Image(label="Youtube Thumbnail")
-                        with gr.Column():
-                            tb_title = gr.Label(label="Youtube Title")
-                            tb_description = gr.Textbox(label="Youtube Description", max_lines=15)
+                # with gr.TabItem("Youtube"):  # tab2
+                #     with gr.Row():
+                #         tb_youtubelink = gr.Textbox(label="Youtube Link")
+                #     with gr.Row(equal_height=True):
+                #         with gr.Column():
+                #             img_thumbnail = gr.Image(label="Youtube Thumbnail")
+                #         with gr.Column():
+                #             tb_title = gr.Label(label="Youtube Title")
+                #             tb_description = gr.Textbox(label="Youtube Description", max_lines=15)
 
-                    whisper_params, dd_file_format, cb_timestamp = self.create_whisper_parameters()
+                #     whisper_params, dd_file_format, cb_timestamp = self.create_whisper_parameters()
 
-                    with gr.Row():
-                        btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
-                    with gr.Row():
-                        tb_indicator = gr.Textbox(label="Output", scale=5)
-                        files_subtitles = gr.Files(label="Downloadable output file", scale=3)
-                        btn_openfolder = gr.Button('📂', scale=1)
+                #     with gr.Row():
+                #         btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
+                #     with gr.Row():
+                #         tb_indicator = gr.Textbox(label="Output", scale=5)
+                #         files_subtitles = gr.Files(label="Downloadable output file", scale=3)
+                #         btn_openfolder = gr.Button('📂', scale=1)
 
-                    params = [tb_youtubelink, dd_file_format, cb_timestamp]
+                #     params = [tb_youtubelink, dd_file_format, cb_timestamp]
 
-                    btn_run.click(fn=self.whisper_inf.transcribe_youtube,
-                                  inputs=params + whisper_params.as_list(),
-                                  outputs=[tb_indicator, files_subtitles])
-                    tb_youtubelink.change(get_ytmetas, inputs=[tb_youtubelink],
-                                          outputs=[img_thumbnail, tb_title, tb_description])
-                    btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
+                #     btn_run.click(fn=self.whisper_inf.transcribe_youtube,
+                #                   inputs=params + whisper_params.as_list(),
+                #                   outputs=[tb_indicator, files_subtitles])
+                #     tb_youtubelink.change(get_ytmetas, inputs=[tb_youtubelink],
+                #                           outputs=[img_thumbnail, tb_title, tb_description])
+                #     btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
 
                 with gr.TabItem("Mic"):  # tab3
                     with gr.Row():
@@ -253,77 +270,94 @@ class App:
                         files_subtitles = gr.Files(label="Downloadable output file", scale=3)
                         btn_openfolder = gr.Button('📂', scale=1)
 
+                    with gr.Row():
+                        # 添加标准化按钮
+                        btn_standardize = gr.Button("STANDARDIZED SUBTITLE FILE", variant="primary")
+                    with gr.Row():
+                        tb_indicator_standardized = gr.Textbox(label="Standardized Output", scale=5)
+                        files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
+                        btn_openfolder_standardized = gr.Button('📂', scale=1)
+                        
                     params = [mic_input, dd_file_format]
 
                     btn_run.click(fn=self.whisper_inf.transcribe_mic,
                                   inputs=params + whisper_params.as_list(),
                                   outputs=[tb_indicator, files_subtitles])
                     btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
+                    
+                    btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
+                    
+                    # 添加标准化按钮的点击事件
+                    btn_standardize.click(
+                        fn=self.sip3_api.standardize_subtitle_file,
+                        inputs=[files_subtitles],
+                        outputs=[tb_indicator_standardized, files_subtitles_standardized],
+                    )
 
-                with gr.TabItem("T2T Translation"):  # tab 4
-                    with gr.Row():
-                        file_subs = gr.Files(type="filepath", label="Upload Subtitle Files to translate here",
-                                             file_types=['.vtt', '.srt'])
+                # with gr.TabItem("T2T Translation"):  # tab 4
+                #     with gr.Row():
+                #         file_subs = gr.Files(type="filepath", label="Upload Subtitle Files to translate here",
+                #                              file_types=['.vtt', '.srt'])
 
-                    with gr.TabItem("DeepL API"):  # sub tab1
-                        with gr.Row():
-                            tb_authkey = gr.Textbox(label="Your Auth Key (API KEY)",
-                                                    value="")
-                        with gr.Row():
-                            dd_deepl_sourcelang = gr.Dropdown(label="Source Language", value="Automatic Detection",
-                                                              choices=list(
-                                                                  self.deepl_api.available_source_langs.keys()))
-                            dd_deepl_targetlang = gr.Dropdown(label="Target Language", value="English",
-                                                              choices=list(
-                                                                  self.deepl_api.available_target_langs.keys()))
-                        with gr.Row():
-                            cb_deepl_ispro = gr.Checkbox(label="Pro User?", value=False)
-                        with gr.Row():
-                            btn_run = gr.Button("TRANSLATE SUBTITLE FILE", variant="primary")
-                        with gr.Row():
-                            tb_indicator = gr.Textbox(label="Output", scale=5)
-                            files_subtitles = gr.Files(label="Downloadable output file", scale=3)
-                            btn_openfolder = gr.Button('📂', scale=1)
+                #     with gr.TabItem("DeepL API"):  # sub tab1
+                #         with gr.Row():
+                #             tb_authkey = gr.Textbox(label="Your Auth Key (API KEY)",
+                #                                     value="")
+                #         with gr.Row():
+                #             dd_deepl_sourcelang = gr.Dropdown(label="Source Language", value="Automatic Detection",
+                #                                               choices=list(
+                #                                                   self.deepl_api.available_source_langs.keys()))
+                #             dd_deepl_targetlang = gr.Dropdown(label="Target Language", value="English",
+                #                                               choices=list(
+                #                                                   self.deepl_api.available_target_langs.keys()))
+                #         with gr.Row():
+                #             cb_deepl_ispro = gr.Checkbox(label="Pro User?", value=False)
+                #         with gr.Row():
+                #             btn_run = gr.Button("TRANSLATE SUBTITLE FILE", variant="primary")
+                #         with gr.Row():
+                #             tb_indicator = gr.Textbox(label="Output", scale=5)
+                #             files_subtitles = gr.Files(label="Downloadable output file", scale=3)
+                #             btn_openfolder = gr.Button('📂', scale=1)
 
-                    btn_run.click(fn=self.deepl_api.translate_deepl,
-                                  inputs=[tb_authkey, file_subs, dd_deepl_sourcelang, dd_deepl_targetlang,
-                                          cb_deepl_ispro],
-                                  outputs=[tb_indicator, files_subtitles])
+                #     btn_run.click(fn=self.deepl_api.translate_deepl,
+                #                   inputs=[tb_authkey, file_subs, dd_deepl_sourcelang, dd_deepl_targetlang,
+                #                           cb_deepl_ispro],
+                #                   outputs=[tb_indicator, files_subtitles])
 
-                    btn_openfolder.click(fn=lambda: self.open_folder(os.path.join("outputs", "translations")),
-                                         inputs=None,
-                                         outputs=None)
+                #     btn_openfolder.click(fn=lambda: self.open_folder(os.path.join("outputs", "translations")),
+                #                          inputs=None,
+                #                          outputs=None)
 
-                    with gr.TabItem("NLLB"):  # sub tab2
-                        with gr.Row():
-                            dd_nllb_model = gr.Dropdown(label="Model", value="facebook/nllb-200-1.3B",
-                                                        choices=self.nllb_inf.available_models)
-                            dd_nllb_sourcelang = gr.Dropdown(label="Source Language",
-                                                             choices=self.nllb_inf.available_source_langs)
-                            dd_nllb_targetlang = gr.Dropdown(label="Target Language",
-                                                             choices=self.nllb_inf.available_target_langs)
-                        with gr.Row():
-                            nb_max_length = gr.Number(label="Max Length Per Line", value=200, precision=0)
-                        with gr.Row():
-                            cb_timestamp = gr.Checkbox(value=True, label="Add a timestamp to the end of the filename",
-                                                       interactive=True)
-                        with gr.Row():
-                            btn_run = gr.Button("TRANSLATE SUBTITLE FILE", variant="primary")
-                        with gr.Row():
-                            tb_indicator = gr.Textbox(label="Output", scale=5)
-                            files_subtitles = gr.Files(label="Downloadable output file", scale=3)
-                            btn_openfolder = gr.Button('📂', scale=1)
-                        with gr.Column():
-                            md_vram_table = gr.HTML(NLLB_VRAM_TABLE, elem_id="md_nllb_vram_table")
+                #     with gr.TabItem("NLLB"):  # sub tab2
+                #         with gr.Row():
+                #             dd_nllb_model = gr.Dropdown(label="Model", value="facebook/nllb-200-1.3B",
+                #                                         choices=self.nllb_inf.available_models)
+                #             dd_nllb_sourcelang = gr.Dropdown(label="Source Language",
+                #                                              choices=self.nllb_inf.available_source_langs)
+                #             dd_nllb_targetlang = gr.Dropdown(label="Target Language",
+                #                                              choices=self.nllb_inf.available_target_langs)
+                #         with gr.Row():
+                #             nb_max_length = gr.Number(label="Max Length Per Line", value=200, precision=0)
+                #         with gr.Row():
+                #             cb_timestamp = gr.Checkbox(value=True, label="Add a timestamp to the end of the filename",
+                #                                        interactive=True)
+                #         with gr.Row():
+                #             btn_run = gr.Button("TRANSLATE SUBTITLE FILE", variant="primary")
+                #         with gr.Row():
+                #             tb_indicator = gr.Textbox(label="Output", scale=5)
+                #             files_subtitles = gr.Files(label="Downloadable output file", scale=3)
+                #             btn_openfolder = gr.Button('📂', scale=1)
+                #         with gr.Column():
+                #             md_vram_table = gr.HTML(NLLB_VRAM_TABLE, elem_id="md_nllb_vram_table")
 
-                    btn_run.click(fn=self.nllb_inf.translate_file,
-                                  inputs=[file_subs, dd_nllb_model, dd_nllb_sourcelang, dd_nllb_targetlang,
-                                          nb_max_length, cb_timestamp],
-                                  outputs=[tb_indicator, files_subtitles])
+                #     btn_run.click(fn=self.nllb_inf.translate_file,
+                #                   inputs=[file_subs, dd_nllb_model, dd_nllb_sourcelang, dd_nllb_targetlang,
+                #                           nb_max_length, cb_timestamp],
+                #                   outputs=[tb_indicator, files_subtitles])
 
-                    btn_openfolder.click(fn=lambda: self.open_folder(os.path.join("outputs", "translations")),
-                                         inputs=None,
-                                         outputs=None)
+                #     btn_openfolder.click(fn=lambda: self.open_folder(os.path.join("outputs", "translations")),
+                #                          inputs=None,
+                #                          outputs=None)
 
         # Launch the app with optional gradio settings
         launch_args = {}
@@ -355,7 +389,6 @@ class App:
             return gr.Checkbox(visible=False, value=False, interactive=False)
         else:
             return gr.Checkbox(visible=True, value=False, label="Translate to English?", interactive=True)
-
 
 # Create the parser for command-line arguments
 parser = argparse.ArgumentParser()
