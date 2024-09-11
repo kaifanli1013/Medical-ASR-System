@@ -214,7 +214,11 @@ class App:
                         tb_indicator_standardized = gr.Textbox(label="Standardized Output", scale=5)
                         files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
                         btn_openfolder_standardized = gr.Button('📂', scale=1)
-                        
+                    
+                    # QR Code   
+                    with gr.Row():
+                        test = gr.Textbox(label="Test", value="Test")
+                    
                     params = [input_file, tb_input_folder, dd_file_format, cb_timestamp]
                     btn_run.click(fn=self.whisper_inf.transcribe_file,
                                   inputs=params + whisper_params.as_list(),

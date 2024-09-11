@@ -5,7 +5,7 @@ import time
 def fake_diffusion(steps):
     for _ in range(steps):
         time.sleep(1)
-        image = np.random.randint(255, size=(300, 600, 3))
+        image = np.random.randint(255, size=(300, 600, 3)) # 300x600 RGB image (values from 0 to 255)
         yield image
         
         
