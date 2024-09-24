@@ -29,3 +29,7 @@
     1. whisper: TODO: bug
     2. faster-whisper: 正常运行
     3. insanely-faster-whisper: TODO: bug
+
+
+## TODO List
+1. 生成的字幕文件先转换为pandas的dataframe文件, 然后转换为excel文档
