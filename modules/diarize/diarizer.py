@@ -58,7 +58,9 @@ class Diarizer:
 
         audio = load_audio(audio)
 
-        diarization_segments = self.pipe(audio)
+        # FIXME: This is a temporary fix for the issue with the model
+        # Min and max speakers are set to 2 and 5 respectively
+        diarization_segments = self.pipe(audio, min_speakers=3, max_speakers=5)
         diarized_result = assign_word_speakers(
             diarization_segments,
             {"segments": transcribed_result}

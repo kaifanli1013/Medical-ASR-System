@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import argparse
 import gradio as gr
 
@@ -12,6 +11,8 @@ from modules.utils.youtube_manager import get_ytmetas
 from modules.translation.deepl_api import DeepLAPI
 from modules.whisper.whisper_parameter import *
 from modules.normalization.sip3_api import SIP3API
+
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 class App:
     def __init__(self, args):
@@ -148,12 +149,15 @@ class App:
             nb_min_silence_duration_ms = gr.Number(label="Minimum Silence Duration (ms)", precision=0, value=2000)
             nb_speech_pad_ms = gr.Number(label="Speech Padding (ms)", precision=0, value=400)
 
+        # Diarization opened by default
         with gr.Accordion("Diarization", open=False):
-            cb_diarize = gr.Checkbox(label="Enable Diarization")
-            tb_hf_token = gr.Text(label="HuggingFace Token", value="",
+            cb_diarize = gr.Checkbox(label="Enable Diarization", value=True)
+            tb_hf_token = gr.Text(label="HuggingFace Token", value="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",
                                   info="This is only needed the first time you download the model. If you already have models, you don't need to enter. To download the model, you must manually go to \"https://huggingface.co/pyannote/speaker-diarization-3.1\" and agree to their requirement.")
             dd_diarization_device = gr.Dropdown(label="Device",
-                                                choices=self.whisper_inf.diarizer.get_available_device(),
+                                                # choices=self.whisper_inf.diarizer.get_available_device(),
+                                                # FIXME: default device is on cpu
+                                                choices=["cpu"],
                                                 value=self.whisper_inf.diarizer.get_device())
 
         dd_model.change(fn=self.on_change_models, inputs=[dd_model], outputs=[cb_translate])

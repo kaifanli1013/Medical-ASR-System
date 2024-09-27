@@ -3,6 +3,9 @@
 - dependencies
     requirments.txt
 
+- Pipeline
+    - Default model: faster-whisper large-v2
+
 - running
 1. 启动的时候使用: python demo.py --share 
 
@@ -30,6 +33,11 @@
     2. faster-whisper: 正常运行
     3. insanely-faster-whisper: TODO: bug
 
+4. diarization:
+    - FIXME:  默认使用和whisper模型同一个gpu, 会产生冲突, 目前默认放在cpu上
+    
 
 ## TODO List
-1. 生成的字幕文件先转换为pandas的dataframe文件, 然后转换为excel文档
+1. 默认的框架里不支持调整diarization的最小识别人数和最大识别人数
+    - 提供UI接口
+2. 生成的字幕文件先转换为pandas的dataframe文件, 然后转换为excel文档
