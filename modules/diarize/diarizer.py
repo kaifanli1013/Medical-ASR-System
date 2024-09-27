@@ -23,7 +23,9 @@ class Diarizer:
             audio: str,
             transcribed_result: List[dict],
             use_auth_token: str,
-            device: str
+            device: str,
+            min_speakers: int,
+            max_speakers: int,
             ):
         """
         Diarize transcribed result as a post-processing
@@ -53,14 +55,16 @@ class Diarizer:
                 or self.pipe is None):
             self.update_pipe(
                 device=device,
-                use_auth_token=use_auth_token
+                use_auth_token=use_auth_token,
             )
 
         audio = load_audio(audio)
 
-        # FIXME: This is a temporary fix for the issue with the model
-        # Min and max speakers are set to 2 and 5 respectively
-        diarization_segments = self.pipe(audio, min_speakers=3, max_speakers=5)
+        diarization_segments = self.pipe(
+            audio=audio,
+            min_speakers=min_speakers,
+            max_speakers=max_speakers,
+        )
         diarized_result = assign_word_speakers(
             diarization_segments,
             {"segments": transcribed_result}
@@ -77,7 +81,7 @@ class Diarizer:
 
     def update_pipe(self,
                     use_auth_token: str,
-                    device: str
+                    device: str,
                     ):
         """
         Set pipeline for diarization

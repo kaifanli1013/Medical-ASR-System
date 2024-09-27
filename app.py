@@ -159,6 +159,10 @@ class App:
                                                 # FIXME: default device is on cpu
                                                 choices=["cpu"],
                                                 value=self.whisper_inf.diarizer.get_device())
+            
+            # add diarization parameters
+            min_speakers = gr.Number(label="Min Speakers", value=1, precision=0, interactive=True)
+            max_speakers = gr.Number(label="Max Speakers", value=5, precision=0, interactive=True)
 
         dd_model.change(fn=self.on_change_models, inputs=[dd_model], outputs=[cb_translate])
 
@@ -172,7 +176,11 @@ class App:
                 vad_filter=cb_vad_filter, threshold=sd_threshold, min_speech_duration_ms=nb_min_speech_duration_ms,
                 max_speech_duration_s=nb_max_speech_duration_s, min_silence_duration_ms=nb_min_silence_duration_ms,
                 speech_pad_ms=nb_speech_pad_ms, chunk_length_s=nb_chunk_length_s, batch_size=nb_batch_size,
+                
+                # diarization parameters
                 is_diarize=cb_diarize, hf_token=tb_hf_token, diarization_device=dd_diarization_device,
+                min_speakers=min_speakers, max_speakers=max_speakers,
+                
                 length_penalty=nb_length_penalty, repetition_penalty=nb_repetition_penalty,
                 no_repeat_ngram_size=nb_no_repeat_ngram_size, prefix=tb_prefix, suppress_blank=cb_suppress_blank,
                 suppress_tokens=tb_suppress_tokens, max_initial_timestamp=nb_max_initial_timestamp,

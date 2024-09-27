@@ -22,7 +22,6 @@ class DiarizationPipeline:
             model_name,
             use_auth_token=use_auth_token,
             cache_dir=cache_dir,
-            # FIXME: This is a temporary fix for the issue with the model
         ).to(device)
 
     def __call__(self, audio: Union[str, np.ndarray], min_speakers=None, max_speakers=None):

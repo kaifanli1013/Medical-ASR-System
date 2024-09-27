@@ -27,9 +27,14 @@ class WhisperParameters:
     speech_pad_ms: gr.Number
     chunk_length_s: gr.Number
     batch_size: gr.Number
+    
+    # diarization
     is_diarize: gr.Checkbox
     hf_token: gr.Textbox
     diarization_device: gr.Dropdown
+    min_speakers: gr.Number
+    max_speakers: gr.Number
+    
     length_penalty: gr.Number
     repetition_penalty: gr.Number
     no_repeat_ngram_size: gr.Number
@@ -146,6 +151,12 @@ class WhisperParameters:
         
     diarization_device: gr.Dropdown
         This parameter is related with whisperx. Device to run diarization model
+    
+    min_speakers: gr.Number
+        This parameter is related with whisperx. Minimum number of speakers to consider.
+        
+    max_speakers: gr.Number
+        This parameter is related with whisperx. Maximum number of speakers to consider.
         
     length_penalty: 
         This parameter is related to faster-whisper. Exponential length penalty constant.
@@ -256,6 +267,8 @@ class WhisperValues:
     is_diarize: bool
     hf_token: str
     diarization_device: str
+    min_speakers: int
+    max_speakers: int
     length_penalty: float
     repetition_penalty: float
     no_repeat_ngram_size: int
