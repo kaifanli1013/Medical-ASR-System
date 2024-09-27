@@ -40,6 +40,7 @@
 ## TODO List
 - whisper
     - 调整每个片段的文本长度
+    - 提供电子病历表格的下载
 
 - Diarization
     - ~~提供UI接口来调整speaker-diarization模型所能识别的最小和最大人数~~
@@ -50,6 +51,7 @@
     - 重载模式: https://www.gradio.app/guides/developing-faster-with-reload-mode
 
 - Open AI
+    - 添加电子病历生成功能
 
 - UI
     - 自动将SPEAKER_N转化为患者或医生

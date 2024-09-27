@@ -37,6 +37,8 @@ with gr.Blocks() as demo:
 
     # 设置按钮点击事件
     generate_button.click(fn=parse_srt_to_table, inputs=file_input, outputs=output_table)
+    
+
 
 # 启动应用
 if __name__ == "__main__":
