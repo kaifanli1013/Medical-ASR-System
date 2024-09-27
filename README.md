@@ -4,12 +4,12 @@
     requirments.txt
 
 - Pipeline
-    - Default model: faster-whisper large-v2
+    - Default model: faster-whisper large-v3
 
 - running
-1. 启动的时候使用: python demo.py --share 
+1. 启动的时候使用: python app.py --share
 
-- debug
+## Debug List
 1. Could not load library libcudnn_ops_infer.so.8 
     - https://github.com/SYSTRAN/faster-whisper/issues/516
         1. cuda 11.8
@@ -35,15 +35,23 @@
 
 4. diarization:
     - FIXME:  默认使用和whisper模型同一个gpu, 会产生冲突, 目前默认放在cpu上
-    
+    - ffmpeg库依赖: conda install ffmpeg
 
 ## TODO List
+- whisper
+    - 调整每个片段的文本长度
+
 - Diarization
-    - 提供UI接口来调整speaker-diarization模型所能识别的最小和最大人数
+    - ~~提供UI接口来调整speaker-diarization模型所能识别的最小和最大人数~~
         - ~~UI界面添加slider~~
         - ~~模型初始化添加字段~~
 
-- 生成的字幕文件先转换为pandas的dataframe文件, 然后转换为excel文档
-
 - Gradio
     - 重载模式: https://www.gradio.app/guides/developing-faster-with-reload-mode
+
+- Open AI
+
+- UI
+    - 自动将SPEAKER_N转化为患者或医生
+    - 对患者和医生的对话框进行区分
+    - 提供EMR table的可编辑功能
