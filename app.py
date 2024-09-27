@@ -65,7 +65,7 @@ class App:
 
     def create_whisper_parameters(self):
         with gr.Row():
-            dd_model = gr.Dropdown(choices=self.whisper_inf.available_models, value="large-v2",
+            dd_model = gr.Dropdown(choices=self.whisper_inf.available_models, value="large-v3",
                                    label="Model")
             dd_lang = gr.Dropdown(choices=["Automatic Detection"] + self.whisper_inf.available_langs,
                                   value="Automatic Detection", label="Language")
