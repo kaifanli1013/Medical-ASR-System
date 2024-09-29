@@ -2,13 +2,13 @@ import os
 import ast
 import concurrent
 import json
+import gradio as gr
 import os
 import pandas as pd
 import tiktoken
 from csv import writer
 from IPython.display import display, Markdown, Latex
 from openai import OpenAI
-from PyPDF2 import PdfReader
 from scipy import spatial
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from tqdm import tqdm
@@ -17,6 +17,171 @@ from termcolor import colored
 GPT_MODEL = "gpt-4o"
 EMBEDDING_MODEL = "text-embedding-ada-002"
 client = OpenAI()
+
+field_mapping = {
+    'presenting_complaint': '主訴',
+    'symptoms': '症状',
+    'physical_examination_findings': '身体所見',
+    'test_results': '検査結果',
+    'diagnosis': '診断',
+    'treatment_plan': '治療計画',
+    'prescription_info': '処方情報',
+    'follow_up': '経過観察'
+}
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "read_conversation_and_summarize_into_electronic_medical_record",
+            "description": """
+            あなたは医療アシスタントです。医師と患者、または患者の家族との対話から、以下の重要な医療情報を抽出し、電子カルテに記録してください:
+            - 主訴 (presenting_complaint)
+            - 症状 (symptoms)
+            - 身体所見 (physical_examination_findings)
+            - 検査結果 (test_results)
+            - 診断 (diagnosis)
+            - 治療方針 (treatment_plan)
+            - 処方内容 (prescription_info)
+            - フォローアップ計画 (follow_up)
+
+            **重要な注意事項**:
+            - すでに記録された情報がある場合、それを再度記録しないでください。同じ情報を異なる表現で述べていても、既に記録された情報と同じであれば記録する必要はありません。
+            - すでに記録された情報は{previous_summary}に含まれています。以下に示す内容はすでに記録されています:
+              - 主訴: {previous_summary['presenting_complaint']}
+              - 症状: {previous_summary['symptoms']}
+              - 診断: {previous_summary['diagnosis']}
+              - 治療方針: {previous_summary['treatment_plan']}
+            
+            **新しい情報のみ**を以下の対話から抽出してください:
+            {current_sentence}
+            """,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "current_sentence": {
+                        "type": "string",
+                        "description": "新しい対話内容。この対話から新しい医療情報を抽出します。",
+                    },
+                    "previous_summary": {
+                        "type": "object",
+                        "description": "すでに記録された電子カルテの情報。",
+                        "properties": {
+                            "presenting_complaint": {
+                                "type": "array",
+                                "description": "すでに記録された主訴のリスト。",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "symptoms": {
+                                "type": "array",
+                                "description": "すでに記録された症状のリスト。",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "physical_examination_findings": {
+                                "type": "array",
+                                "description": "すでに記録された身体所見のリスト。",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "test_results": {
+                                "type": "array",
+                                "description": "すでに記録された検査結果のリスト。",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "diagnosis": {
+                                "type": "string",
+                                "description": "すでに記録された診断内容。",
+                            },
+                            "treatment_plan": {
+                                "type": "array",
+                                "description": "すでに記録された治療計画のリスト。",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "prescription_info": {
+                                "type": "array",
+                                "description": "すでに記録された処方内容のリスト。",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "follow_up": {
+                                "type": "array",
+                                "description": "すでに記録されたフォローアップ計画のリスト。",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                        }
+                    },
+                    "presenting_complaint": {
+                        "type": "array",
+                        "description": "新しく抽出された患者が訴えている主な健康上の問題や、診察を求める理由。",
+                        "items": {
+                            "type": "string"
+                        },
+                    },
+                    "symptoms": {  
+                        "type": "array",
+                        "description": "新しく抽出された患者が報告する症状。",
+                        "items": {
+                            "type": "string"
+                        },
+                    },
+                    "physical_examination_findings": {
+                        "type": "array",
+                        "description": "新しく抽出された身体検査の所見。",
+                        "items": {
+                            "type": "string"
+                        },
+                    },
+                    "test_results": {
+                        "type": "array",
+                        "description": "新しく抽出された検査結果。",
+                        "items": {
+                            "type": "string"
+                        },
+                    },
+                    "diagnosis": {
+                        "type": "string",
+                        "description": "新しく抽出された診断。",
+                    },
+                    "treatment_plan": {
+                        "type": "array",
+                        "description": "新しく抽出された治療計画。",
+                        "items": {
+                            "type": "string"
+                        },
+                    },
+                    "prescription_info": {
+                        "type": "array",
+                        "description": "新しく抽出された処方の詳細。",
+                        "items": {
+                            "type": "string"
+                        },
+                    },
+                    "follow_up": {
+                        "type": "array",
+                        "description": "新しく抽出されたフォローアップの詳細。",
+                        "items": {
+                            "type": "string"
+                        },
+                    },
+                },
+                "required": ["previous_summary", "current_sentence", "presenting_complaint", "symptoms", "diagnosis", "treatment_plan"],  
+                "additionalProperties": False,
+            },
+        },
+    },
+]
 
 # chat completion request
 @retry(wait=wait_random_exponential(min=1, max=40), stop=stop_after_attempt(3))
@@ -34,55 +199,46 @@ def chat_completion_request(messages, tools=None, model=GPT_MODEL):
         print(f"Exception: {e}")
         return e
     
-@retry(wait=wait_random_exponential(min=1, max=40), stop=stop_after_attempt(3))
-def embedding_request(text):
-    response = client.embeddings.create(input=text, model=EMBEDDING_MODEL)
-    return response
-
-def calculate_embeddings_for_df(df: pd.DataFrame) -> pd.DataFrame:
-    """为每个对话行计算嵌入并添加到DataFrame中."""
-    df['embedding'] = df['Dialogue'].apply(lambda x: embedding_request(x).data[0].embedding)
-    # print("Generated embeddings:", df['embedding'])
-    return df
-
-def summarize_conversation(content):
+def generate_mer_from_dialogue(df: gr.DataFrame):
+    conv = Conversation()
     system_message = "あなたは医療アシスタントです。医師と患者の間で行われる日本語の会話を要約し、電子カルテを日本語で作成してください。"
-    conversation=Conversation()
-    conversation.add_message("system", system_message)
-    conversation.add_message("user", content)  # 将整个对话传入
-
-    # 调用OpenAI的API获取总结
-    chat_response = chat_completion_request(conversation.conversation_history, tools=tools)
+    conv.add_message("system", system_message)
     
-    summarized_emr = chat_response.choices[0].message.tool_calls[0].function.arguments
-    return json.loads(summarized_emr)
-
-def strings_ranked_by_relatedness(
-    query: str,
-    df: pd.DataFrame,
-    relatedness_fn=lambda x, y: 1 - spatial.distance.cosine(x, y),
-    top_n: int = 100,
-) -> list[str]:
-    """Returns a list of strings and relatednesses, sorted from most related to least."""
-    query_embedding_response = embedding_request(query)
-    query_embedding = query_embedding_response.data[0].embedding  # 修正
-    
-    # 计算每一行对话的相关性
-    strings_and_relatednesses = [
-        (row["Dialogue"], relatedness_fn(query_embedding, row["embedding"]))
-        for i, row in df.iterrows()
-    ]
-    
-    # 打印调试信息
-    # print("strings_and_relatednesses:", strings_and_relatednesses)
-    
-    if not strings_and_relatednesses:  # 如果为空，抛出异常或处理
-        raise ValueError("No relatedness scores were computed. Check your embeddings or data.")
-    
-    # 按相似度排序
-    strings_and_relatednesses.sort(key=lambda x: x[1], reverse=True)
-    strings, relatednesses = zip(*strings_and_relatednesses)  # 解包结果
-    return strings[:top_n]
+    for idx, row in df.iterrows():
+        conv.add_message("user", row["Dialogue"])
+        
+        response = chat_completion_request(
+            messages=conv.conversation_history,
+            tools=tools,
+        )
+        
+        tool_call_id = response.choices[0].message.tool_calls[0].id
+        tool_function_name = response.choices[0].message.tool_calls[0].function.name
+        content = response.choices[0].message.tool_calls[0].function.arguments
+        
+        conv.conversation_history.append(
+            {
+                "role": "assistant",
+                "tool_call_id": tool_call_id,
+                "tool_function_name": tool_function_name,
+                "content": content,
+            }
+        )
+        
+        content_json = json.loads(content)
+        new_entries = []
+        # update the EMR column
+        for key, value in content_json.items():
+            if key not in ("previous_summary", "current_sentence") and value:
+                key_japanese = field_mapping.get(key, key)  # 如果 key 不在字典中，使用原始 key
+                if not isinstance(value, list):
+                    new_entries.append(f"{key_japanese}: {value}")
+                else:
+                    new_entries.append(f"{key_japanese}: {', '.join(value)}")
+        
+        df.at[idx, "EMR"] = "\n".join(new_entries)
+        
+    return df
 
 # conversation completion request
 class Conversation:
@@ -264,160 +420,6 @@ class Conversation:
 #         },
 #     },
 # ]
-
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "read_conversation_and_summarize_into_electronic_medical_record",
-            "description": """
-            あなたは医療アシスタントです。医師と患者、または患者の家族との対話から、以下の重要な医療情報を抽出し、電子カルテに記録してください:
-            - 主訴 (presenting_complaint)
-            - 症状 (symptoms)
-            - 身体所見 (physical_examination_findings)
-            - 検査結果 (test_results)
-            - 診断 (diagnosis)
-            - 治療方針 (treatment_plan)
-            - 処方内容 (prescription_info)
-            - フォローアップ計画 (follow_up)
-
-            **重要な注意事項**:
-            - すでに記録された情報がある場合、それを再度記録しないでください。同じ情報を異なる表現で述べていても、既に記録された情報と同じであれば記録する必要はありません。
-            - すでに記録された情報は{previous_summary}に含まれています。以下に示す内容はすでに記録されています:
-              - 主訴: {previous_summary['presenting_complaint']}
-              - 症状: {previous_summary['symptoms']}
-              - 診断: {previous_summary['diagnosis']}
-              - 治療方針: {previous_summary['treatment_plan']}
-            
-            **新しい情報のみ**を以下の対話から抽出してください:
-            {current_sentence}
-            """,
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "current_sentence": {
-                        "type": "string",
-                        "description": "新しい対話内容。この対話から新しい医療情報を抽出します。",
-                    },
-                    "previous_summary": {
-                        "type": "object",
-                        "description": "すでに記録された電子カルテの情報。",
-                        "properties": {
-                            "presenting_complaint": {
-                                "type": "array",
-                                "description": "すでに記録された主訴のリスト。",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "symptoms": {
-                                "type": "array",
-                                "description": "すでに記録された症状のリスト。",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "physical_examination_findings": {
-                                "type": "array",
-                                "description": "すでに記録された身体所見のリスト。",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "test_results": {
-                                "type": "array",
-                                "description": "すでに記録された検査結果のリスト。",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "diagnosis": {
-                                "type": "string",
-                                "description": "すでに記録された診断内容。",
-                            },
-                            "treatment_plan": {
-                                "type": "array",
-                                "description": "すでに記録された治療計画のリスト。",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "prescription_info": {
-                                "type": "array",
-                                "description": "すでに記録された処方内容のリスト。",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "follow_up": {
-                                "type": "array",
-                                "description": "すでに記録されたフォローアップ計画のリスト。",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                        }
-                    },
-                    "presenting_complaint": {
-                        "type": "array",
-                        "description": "新しく抽出された患者が訴えている主な健康上の問題や、診察を求める理由。",
-                        "items": {
-                            "type": "string"
-                        },
-                    },
-                    "symptoms": {  
-                        "type": "array",
-                        "description": "新しく抽出された患者が報告する症状。",
-                        "items": {
-                            "type": "string"
-                        },
-                    },
-                    "physical_examination_findings": {
-                        "type": "array",
-                        "description": "新しく抽出された身体検査の所見。",
-                        "items": {
-                            "type": "string"
-                        },
-                    },
-                    "test_results": {
-                        "type": "array",
-                        "description": "新しく抽出された検査結果。",
-                        "items": {
-                            "type": "string"
-                        },
-                    },
-                    "diagnosis": {
-                        "type": "string",
-                        "description": "新しく抽出された診断。",
-                    },
-                    "treatment_plan": {
-                        "type": "array",
-                        "description": "新しく抽出された治療計画。",
-                        "items": {
-                            "type": "string"
-                        },
-                    },
-                    "prescription_info": {
-                        "type": "array",
-                        "description": "新しく抽出された処方の詳細。",
-                        "items": {
-                            "type": "string"
-                        },
-                    },
-                    "follow_up": {
-                        "type": "array",
-                        "description": "新しく抽出されたフォローアップの詳細。",
-                        "items": {
-                            "type": "string"
-                        },
-                    },
-                },
-                "required": ["previous_summary", "current_sentence", "presenting_complaint", "symptoms", "diagnosis", "treatment_plan"],  
-                "additionalProperties": False,
-            },
-        },
-    },
-]
 
 # Test sample: 
 # system_message = "You are a medical assistant. You are talking to a patient who is describing their symptoms to you. You need to summarize the conversation into the patient's electronic medical record."

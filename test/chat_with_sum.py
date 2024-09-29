@@ -72,7 +72,7 @@ def parse_and_summarize(file):
     output_table = parse_srt_to_table(content)
     df = generate_mer_from_dialogue(output_table)
     
-    return output_table
+    return df
 
 def generate_mer_from_dialogue(df: gr.DataFrame):
     conv = Conversation()
