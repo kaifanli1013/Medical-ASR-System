@@ -63,6 +63,7 @@ def parse_srt_to_table(content):
 #                     output_table.at[idx, 'EMR'] = f"{japanese_section}: {entry}"
         
 #     return output_table.drop(columns=['embedding'])
+
 def parse_and_summarize(file_list):
     # open the file
     # FIXME: 支持多文件

@@ -70,3 +70,7 @@
     - 自动将SPEAKER_N转化为患者或医生
     - 对患者和医生的对话框进行区分
     - 提供EMR table的可编辑功能
+
+- Mic 
+
+- QR Code

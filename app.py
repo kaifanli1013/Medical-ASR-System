@@ -9,6 +9,7 @@ from modules.translation.nllb_inference import NLLBInference
 from ui.htmls import *
 from modules.utils.youtube_manager import get_ytmetas
 from modules.utils.subtitle2table import *
+from modules.utils.qr_generate import generate_qr_code
 from modules.translation.deepl_api import DeepLAPI
 from modules.whisper.whisper_parameter import *
 from modules.normalization.sip3_api import SIP3API
@@ -236,10 +237,14 @@ class App:
                         # btn_openfolder_standardized = gr.Button('📂', scale=1)
                         tb_standardized_table = gr.DataFrame(headers=["speaker", "content", "EMR"], label="Standardized EMR Table")
                     
-                    # QR Code   
+                    # QR Code 
                     with gr.Row():
-                        test = gr.Textbox(label="Test", value="Test")
+                        qr_button = gr.Button("Generate QR Code", variant="primary")
+                    with gr.Row(visible=True):
+                        standraized_table_file = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
+                        qr_code = gr.Image(label="QR Code", scale=3)
                     
+                    # button click event
                     params = [input_file, tb_input_folder, dd_file_format, cb_timestamp]
                     btn_run.click(fn=self.whisper_inf.transcribe_file,
                                   inputs=params + whisper_params.as_list(),
@@ -247,17 +252,20 @@ class App:
                     btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
                     # btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
 
-                    # srt2table
+                    # srt2table button
                     btn_parse_file_to_table.click(parse_and_summarize, inputs=[files_subtitles], outputs=[tb_table])
                     
-                    # 添加标准化按钮的点击事件
+                    # Normalization by SIP3 button
                     btn_standardize.click(
                         fn=self.sip3_api.standardize_subtitle_file,
                         inputs=[tb_table],
                         # outputs=[tb_indicator_standardized, files_subtitles_standardized],
                         outputs = [tb_standardized_table],
                     )
-
+                    
+                    # QR Code button
+                    qr_button.click(generate_qr_code, inputs=[tb_standardized_table], outputs=[standraized_table_file, qr_code])    
+                        
                 # with gr.TabItem("Youtube"):  # tab2
                 #     with gr.Row():
                 #         tb_youtubelink = gr.Textbox(label="Youtube Link")
