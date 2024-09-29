@@ -231,9 +231,10 @@ class App:
                     with gr.Row():
                         btn_standardize = gr.Button("STANDARDIZED SUBTITLE FILE", variant="primary")
                     with gr.Row():
-                        tb_indicator_standardized = gr.Textbox(label="Standardized Output", scale=5)
-                        files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
-                        btn_openfolder_standardized = gr.Button('📂', scale=1)
+                        # tb_indicator_standardized = gr.Textbox(label="Standardized Output", scale=5)
+                        # files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
+                        # btn_openfolder_standardized = gr.Button('📂', scale=1)
+                        tb_standardized_table = gr.DataFrame(headers=["speaker", "content", "EMR"], label="Standardized EMR Table")
                     
                     # QR Code   
                     with gr.Row():
@@ -244,16 +245,17 @@ class App:
                                   inputs=params + whisper_params.as_list(),
                                   outputs=[tb_indicator, files_subtitles])
                     btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
-                    btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
+                    # btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
 
-                    # 添加点击事件
+                    # srt2table
                     btn_parse_file_to_table.click(parse_and_summarize, inputs=[files_subtitles], outputs=[tb_table])
                     
                     # 添加标准化按钮的点击事件
                     btn_standardize.click(
                         fn=self.sip3_api.standardize_subtitle_file,
-                        inputs=[files_subtitles],
-                        outputs=[tb_indicator_standardized, files_subtitles_standardized],
+                        inputs=[tb_table],
+                        # outputs=[tb_indicator_standardized, files_subtitles_standardized],
+                        outputs = [tb_standardized_table],
                     )
 
                 # with gr.TabItem("Youtube"):  # tab2
@@ -301,9 +303,10 @@ class App:
                         # 添加标准化按钮
                         btn_standardize = gr.Button("STANDARDIZED SUBTITLE FILE", variant="primary")
                     with gr.Row():
-                        tb_indicator_standardized = gr.Textbox(label="Standardized Output", scale=5)
-                        files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
-                        btn_openfolder_standardized = gr.Button('📂', scale=1)
+                        # tb_indicator_standardized = gr.Textbox(label="Standardized Output", scale=5)
+                        # files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
+                        # btn_openfolder_standardized = gr.Button('📂', scale=1)
+                        tb_standardized_table = gr.DataFrame(headers=["speaker", "content", "EMR"], label="Standardized EMR Table")
                         
                     params = [mic_input, dd_file_format]
 
@@ -312,13 +315,14 @@ class App:
                                   outputs=[tb_indicator, files_subtitles])
                     btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
                     
-                    btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
+                    # btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
                     
                     # 添加标准化按钮的点击事件
                     btn_standardize.click(
                         fn=self.sip3_api.standardize_subtitle_file,
-                        inputs=[files_subtitles],
-                        outputs=[tb_indicator_standardized, files_subtitles_standardized],
+                        inputs=[tb_table],
+                        # outputs=[tb_indicator_standardized, files_subtitles_standardized],
+                        outputs = [tb_standardized_table],
                     )
 
                 # with gr.TabItem("T2T Translation"):  # tab 4

@@ -72,5 +72,5 @@ def parse_and_summarize(file_list):
                     output_table.at[idx, 'EMR'] = f"{current_emr}\n{japanese_section}: {entry}"
                 else:
                     output_table.at[idx, 'EMR'] = f"{japanese_section}: {entry}"
-                    
+        
     return output_table.drop(columns=['embedding'])
