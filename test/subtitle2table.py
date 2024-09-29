@@ -80,7 +80,6 @@ def calculate_embeddings_for_df(df: pd.DataFrame) -> pd.DataFrame:
     # print("Generated embeddings:", df['embedding'])
     return df
 
-
 def parse_and_summarize(file):
     
     with open(file.name, 'r', encoding='utf-8') as srt_file:
