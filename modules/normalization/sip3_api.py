@@ -140,11 +140,14 @@ class SIP3API:
             # print(df_list)
             # for df in df_list:
             for index, row in df.iterrows():
+                if row['EMR'] == "":
+                    continue
                 params = {
                     "text": row['EMR'],
                     "category": "disease",
-                    "min_reliability": "C"
+                    "min_reliability": "E"
                 }
+                # print("row['EMR']:", row['EMR'])
                 # print(f"Calling SIP3 API with params: {params}")
                 try:
                     standardized_entities = self.api_call("norms", params)
@@ -152,22 +155,26 @@ class SIP3API:
                 except Exception as api_error:
                     # print(f"API call error: {api_error}")
                     return [f"API call error: {api_error}", None]
-
-                # print(f"Standardizing entities: {standardized_entities}")
                 
                 if not standardized_entities:
                     # print(f"API returned no entities for text: {sub.text}")
                     continue
                 
+                # print(f"Standardizing entities: {standardized_entities}")
+                
                 # 对每个标准化实体进行替换
-                dialogue_text = df.at[index, 'Dialogue']  # 取出对话
+                dialogue_text = df.at[index, 'EMR']  # 取出对话
                 for entity in standardized_entities:
                     # 执行替换
+                    # print(f"Dialogue before replacement: {dialogue_text}")
+                    # print(f"Replacing entity: {entity['text']} with {entity['standard_name'][0]}")
                     dialogue_text = dialogue_text.replace(entity['text'], entity['standard_name'][0])
-                
+                    # print(f"Dialogue after replacement: {dialogue_text}")
+                    
                 # 将替换后的文本赋值回 DataFrame
-                df.at[index, 'Dialogue'] = dialogue_text
-            
+                df.at[index, 'EMR'] = dialogue_text
+
+            # print(df)
             return df
         
         except Exception as e:
@@ -179,9 +186,9 @@ if __name__ == "__main__":
     sip3_api = SIP3API(base_url)
     
     params = {
-        "text": "最近お腹が痛くて、時々熱もあります。",  # 示例医学文本
+        "text": "症状: 鎖骨のがん細胞が確認された",  # 示例医学文本
         "category": "disease",  # 可选参数
-        "min_reliability": "D"
+        "min_reliability": "E"
     }
 
     # 调用/norms端点
