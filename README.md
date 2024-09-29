@@ -37,6 +37,13 @@
     - FIXME:  默认使用和whisper模型同一个gpu, 会产生冲突, 目前默认放在cpu上
     - ffmpeg库依赖: conda install ffmpeg
 
+- OpenAI:
+    - tools_call: 
+        -  Error code 400: 可能原因是在tools的strict字段设置为True，导致模型强制检查，当模型判断某个字段会出现的时候，则要求一定要出现在'required'列表中。
+            `Error code: 400 - {'error': {'message': "Invalid schema for function 'read_conversation_and_summarize_into_electronic_medical_record': In context=(), 'required' is required to be supplied and to be an array including every key in properties. Missing 'physical_examination_findings'.", 'type': 'invalid_request_error', 'param': 'tools[0].function.parameters', 'code': 'invalid_function_parameters'}}`
+        
+
+
 ## TODO List
 - whisper
     - 调整每个片段的文本长度
@@ -52,6 +59,9 @@
 
 - Open AI
     - 添加电子病历生成功能
+        - 添加一个从文本中生成电子病历摘要的功能
+        - 电子病历文本标准化
+    - 基于相似度的电子病历查询对话匹配功能 
 
 - UI
     - 自动将SPEAKER_N转化为患者或医生

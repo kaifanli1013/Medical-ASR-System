@@ -8,7 +8,7 @@ from modules.whisper.insanely_fast_whisper_inference import InsanelyFastWhisperI
 from modules.translation.nllb_inference import NLLBInference
 from ui.htmls import *
 from modules.utils.youtube_manager import get_ytmetas
-from modules.utils.subtitle2table import parse_srt_to_table
+from modules.utils.subtitle2table import *
 from modules.translation.deepl_api import DeepLAPI
 from modules.whisper.whisper_parameter import *
 from modules.normalization.sip3_api import SIP3API
@@ -247,7 +247,7 @@ class App:
                     btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
 
                     # 添加点击事件
-                    btn_parse_file_to_table.click(parse_srt_to_table, inputs=[files_subtitles], outputs=[tb_table])
+                    btn_parse_file_to_table.click(parse_and_summarize, inputs=[files_subtitles], outputs=[tb_table])
                     
                     # 添加标准化按钮的点击事件
                     btn_standardize.click(
