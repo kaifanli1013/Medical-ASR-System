@@ -240,12 +240,13 @@ class App:
                     # QR Code 
                     with gr.Row():
                         qr_button = gr.Button("Generate QR Code", variant="primary")
-                    with gr.Row(visible=True):
+                    with gr.Row(visible=True): # TODO: visible function
                         standraized_table_file = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
                         qr_code = gr.Image(label="QR Code", scale=3)
                     
                     # button click event
                     params = [input_file, tb_input_folder, dd_file_format, cb_timestamp]
+                    
                     btn_run.click(fn=self.whisper_inf.transcribe_file,
                                   inputs=params + whisper_params.as_list(),
                                   outputs=[tb_indicator, files_subtitles])
@@ -307,6 +308,21 @@ class App:
                         files_subtitles = gr.Files(label="Downloadable output file", scale=3)
                         btn_openfolder = gr.Button('📂', scale=1)
 
+                    # subtilte file to table
+                    with gr.Row():
+                        btn_parse_file_to_table = gr.Button("PARSE FILE TO TABLE", variant="primary")
+                    with gr.Row():
+                        tb_table = gr.DataFrame(headers=["speaker", "content", "EMR"], label="EMR Table")
+ 
+                    # Normalization by SIP3
+                    with gr.Row():
+                        btn_standardize = gr.Button("STANDARDIZED SUBTITLE FILE", variant="primary")
+                    with gr.Row():
+                        # tb_indicator_standardized = gr.Textbox(label="Standardized Output", scale=5)
+                        # files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
+                        # btn_openfolder_standardized = gr.Button('📂', scale=1)
+                        tb_standardized_table = gr.DataFrame(headers=["speaker", "content", "EMR"], label="Standardized EMR Table")
+                                        
                     with gr.Row():
                         # 添加标准化按钮
                         btn_standardize = gr.Button("STANDARDIZED SUBTITLE FILE", variant="primary")
@@ -315,16 +331,25 @@ class App:
                         # files_subtitles_standardized = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
                         # btn_openfolder_standardized = gr.Button('📂', scale=1)
                         tb_standardized_table = gr.DataFrame(headers=["speaker", "content", "EMR"], label="Standardized EMR Table")
-                        
+                    
+                    # QR Code 
+                    with gr.Row():
+                        qr_button = gr.Button("Generate QR Code", variant="primary")
+                    with gr.Row(visible=True): # TODO: visible function
+                        standraized_table_file = gr.Files(label="Downloadable standardized output file", scale=3, interactive=False)
+                        qr_code = gr.Image(label="QR Code", scale=3)                    
+                    
                     params = [mic_input, dd_file_format]
 
                     btn_run.click(fn=self.whisper_inf.transcribe_mic,
                                   inputs=params + whisper_params.as_list(),
                                   outputs=[tb_indicator, files_subtitles])
-                    btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
-                    
+                    btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None) 
                     # btn_openfolder_standardized.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
-                    
+
+                    # srt2table button
+                    btn_parse_file_to_table.click(parse_and_summarize, inputs=[files_subtitles], outputs=[tb_table])
+                                        
                     # 添加标准化按钮的点击事件
                     btn_standardize.click(
                         fn=self.sip3_api.standardize_subtitle_file,
@@ -333,6 +358,9 @@ class App:
                         outputs = [tb_standardized_table],
                     )
 
+                    # QR Code button
+                    qr_button.click(generate_qr_code, inputs=[tb_standardized_table], outputs=[standraized_table_file, qr_code])    
+                                    
                 # with gr.TabItem("T2T Translation"):  # tab 4
                 #     with gr.Row():
                 #         file_subs = gr.Files(type="filepath", label="Upload Subtitle Files to translate here",
