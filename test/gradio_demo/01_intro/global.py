@@ -1,0 +1,17 @@
+import gradio as gr
+
+scores = []
+
+def track_score(score):
+    scores.append(score)
+    #返回分数top3
+    top_scores = sorted(scores, reverse=True)[:3]
+    return top_scores
+
+demo = gr.Interface(
+    track_score,
+    gr.Number(label="Score"),
+    gr.JSON(label="Top Scores")
+)
+
+demo.launch()

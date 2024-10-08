@@ -1,3 +1,11 @@
+# copy from whisper-webui/.gitignore
+venv/
+ui/__pycache__/
+outputs/
+modules/__pycache__/
+models/
+modules/yt_tmp.wav
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
