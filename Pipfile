@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[[source]]
+url = "https://download.pytorch.org/whl/cu121"
+verify_ssl = true
+name = "downloadpytorch"
+
+[packages]
+torch = "*"
+faster-whisper = "==1.0.3"
+transformers = "*"
+gradio = "*"
+pytube = "*"
+"pyannote.audio" = "==3.3.1"
+pysrt = "*"
+openai-whisper = {git = "https://github.com/jhj0517/jhj0517-whisper.git"}
+qrcode = {extras = ["pil"], version = "*"}
+ipython = "*"
+openai = "*"
+tenacity = "*"
+termcolor = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
