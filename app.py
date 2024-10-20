@@ -119,7 +119,7 @@ class App:
                                                 info="List of token IDs to suppress. -1 will suppress a default set of symbols as defined in the model config.json file.")
                 nb_max_initial_timestamp = gr.Number(label="Max Initial Timestamp", value=1.0,
                                                      info="The initial timestamp cannot be later than this.")
-                cb_word_timestamps = gr.Checkbox(label="Word Timestamps", value=False,
+                cb_word_timestamps = gr.Checkbox(label="Word Timestamps", value=True,
                                                  info="Extract word-level timestamps using the cross-attention pattern and dynamic time warping, and include the timestamps for each word in each segment.")
                 tb_prepend_punctuations = gr.Textbox(label="Prepend Punctuations", value="\"'“¿([{-",
                                                      info="If 'Word Timestamps' is True, merge these punctuation symbols with the next word.")

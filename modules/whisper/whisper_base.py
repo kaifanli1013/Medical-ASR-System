@@ -110,7 +110,9 @@ class WhisperBase(ABC):
             progress,
             *astuple(params)
         )
-
+        
+        print(f"Transcribed result: {result}")
+        
         if params.is_diarize:
             result, elapsed_time_diarization = self.diarizer.run(
                 audio=audio,
@@ -123,6 +125,88 @@ class WhisperBase(ABC):
             elapsed_time += elapsed_time_diarization
         return result, elapsed_time
 
+    # def transcribe_file(self,
+    #                     files: list,
+    #                     input_folder_path: str,
+    #                     file_format: str,
+    #                     add_timestamp: bool,
+    #                     progress=gr.Progress(),
+    #                     *whisper_params,
+    #                     ) -> list:
+    #     """
+    #     Write subtitle file from Files
+
+    #     Parameters
+    #     ----------
+    #     files: list
+    #         List of files to transcribe from gr.Files()
+    #     input_folder_path: str
+    #         Input folder path to transcribe from gr.Textbox(). If this is provided, `files` will be ignored and
+    #         this will be used instead.
+    #     file_format: str
+    #         Subtitle File format to write from gr.Dropdown(). Supported format: [SRT, WebVTT, txt]
+    #     add_timestamp: bool
+    #         Boolean value from gr.Checkbox() that determines whether to add a timestamp at the end of the subtitle filename.
+    #     progress: gr.Progress
+    #         Indicator to show progress directly in gradio.
+    #     *whisper_params: tuple
+    #         Parameters related with whisper. This will be dealt with "WhisperParameters" data class
+
+    #     Returns
+    #     ----------
+    #     result_str:
+    #         Result of transcription to return to gr.Textbox()
+    #     result_file_path:
+    #         Output file path to return to gr.Files()
+    #     """
+    #     try:
+    #         if input_folder_path:
+    #             files = get_media_files(input_folder_path)
+    #             files = format_gradio_files(files)
+
+    #         files_info = {}
+    #         for file in files:
+    #             transcribed_segments, time_for_task = self.run(
+    #                 file.name,
+    #                 progress,
+    #                 *whisper_params,
+    #             )
+
+    #             print(f"Transcribed segments: {transcribed_segments}")
+                
+    #             file_name, file_ext = os.path.splitext(os.path.basename(file.name))
+    #             file_name = safe_filename(file_name)
+    #             subtitle, file_path = self.generate_and_write_file(
+    #                 file_name=file_name,
+    #                 transcribed_segments=transcribed_segments,
+    #                 add_timestamp=add_timestamp,
+    #                 file_format=file_format,
+    #                 output_dir=self.output_dir
+    #             )
+    #             files_info[file_name] = {"subtitle": subtitle, "time_for_task": time_for_task, "path": file_path}
+
+    #         total_result = ''
+    #         total_time = 0
+    #         for file_name, info in files_info.items():
+    #             total_result += '------------------------------------\n'
+    #             total_result += f'{file_name}\n\n'
+    #             total_result += f'{info["subtitle"]}'
+    #             total_time += info["time_for_task"]
+
+    #         result_str = f"Done in {self.format_time(total_time)}! Subtitle is in the outputs folder.\n\n{total_result}"
+    #         result_file_path = [info['path'] for info in files_info.values()]
+
+    #         print(f'result_str: {result_str}')
+    #         print(f'result_file_path: {result_file_path}')
+            
+    #         return [result_str, result_file_path]
+
+    #     except Exception as e:
+    #         print(f"Error transcribing file: {e}")
+    #     finally:
+    #         self.release_cuda_memory()
+    #         if not files:
+    #             self.remove_input_files([file.name for file in files])
     def transcribe_file(self,
                         files: list,
                         input_folder_path: str,
@@ -159,47 +243,77 @@ class WhisperBase(ABC):
         """
         try:
             if input_folder_path:
-                files = get_media_files(input_folder_path)
-                files = format_gradio_files(files)
+                try:
+                    files = get_media_files(input_folder_path)
+                    files = format_gradio_files(files)
+                    print(f"Files from input folder path: {files}")
+                except Exception as e:
+                    print(f"Error getting or formatting files from folder path: {e}")
+                    return ["Error getting or formatting files", None]
 
             files_info = {}
             for file in files:
-                transcribed_segments, time_for_task = self.run(
-                    file.name,
-                    progress,
-                    *whisper_params,
-                )
+                try:
+                    transcribed_segments, time_for_task = self.run(
+                        file.name,
+                        progress,
+                        *whisper_params,
+                    )
+                    print(f"Transcribed segments: {transcribed_segments}")
+                except Exception as e:
+                    print(f"Error running transcription for file {file.name}: {e}")
+                    continue
 
-                file_name, file_ext = os.path.splitext(os.path.basename(file.name))
-                file_name = safe_filename(file_name)
-                subtitle, file_path = self.generate_and_write_file(
-                    file_name=file_name,
-                    transcribed_segments=transcribed_segments,
-                    add_timestamp=add_timestamp,
-                    file_format=file_format,
-                    output_dir=self.output_dir
-                )
-                files_info[file_name] = {"subtitle": subtitle, "time_for_task": time_for_task, "path": file_path}
+                try:
+                    file_name, file_ext = os.path.splitext(os.path.basename(file.name))
+                    file_name = safe_filename(file_name)
+                    subtitle, file_path = self.generate_and_write_file(
+                        file_name=file_name,
+                        transcribed_segments=transcribed_segments,
+                        add_timestamp=add_timestamp,
+                        file_format=file_format,
+                        output_dir=self.output_dir
+                    )
+                    files_info[file_name] = {"subtitle": subtitle, "time_for_task": time_for_task, "path": file_path}
+                except Exception as e:
+                    print(f"Error generating or writing subtitle file for {file.name}: {e}")
+                    continue
 
-            total_result = ''
-            total_time = 0
-            for file_name, info in files_info.items():
-                total_result += '------------------------------------\n'
-                total_result += f'{file_name}\n\n'
-                total_result += f'{info["subtitle"]}'
-                total_time += info["time_for_task"]
+            try:
+                total_result = ''
+                total_time = 0
+                for file_name, info in files_info.items():
+                    total_result += '------------------------------------\n'
+                    total_result += f'{file_name}\n\n'
+                    total_result += f'{info["subtitle"]}'
+                    total_time += info["time_for_task"]
 
-            result_str = f"Done in {self.format_time(total_time)}! Subtitle is in the outputs folder.\n\n{total_result}"
-            result_file_path = [info['path'] for info in files_info.values()]
+                result_str = f"Done in {self.format_time(total_time)}! Subtitle is in the outputs folder.\n\n{total_result}"
+                result_file_path = [info['path'] for info in files_info.values()]
+
+                print(f'result_str: {result_str}')
+                print(f'result_file_path: {result_file_path}')
+            except Exception as e:
+                print(f"Error processing final results: {e}")
+                return ["Error processing final results", None]
 
             return [result_str, result_file_path]
 
         except Exception as e:
             print(f"Error transcribing file: {e}")
+            return ["Error during transcription", None]
+
         finally:
-            self.release_cuda_memory()
-            if not files:
-                self.remove_input_files([file.name for file in files])
+            try:
+                self.release_cuda_memory()
+            except Exception as e:
+                print(f"Error releasing CUDA memory: {e}")
+            
+            try:
+                if not files:
+                    self.remove_input_files([file.name for file in files])
+            except Exception as e:
+                print(f"Error removing input files: {e}")
 
     def transcribe_mic(self,
                        mic_audio: str,

@@ -22,6 +22,10 @@ ipython = "*"
 openai = "*"
 tenacity = "*"
 termcolor = "*"
+librosa = "*"
+torchaudio = "*"
+wtpsplit = "*"
+soundfile = "*"
 
 [dev-packages]
 
