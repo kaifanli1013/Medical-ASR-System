@@ -151,8 +151,6 @@ class FasterWhisperInference(WhisperBase):
                 "text": segment[2],
             })
 
-        print(f'segments_result: {segments_result}')
-
         elapsed_time = time.time() - start_time
         return segments_result, elapsed_time
 

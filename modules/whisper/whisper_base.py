@@ -111,7 +111,6 @@ class WhisperBase(ABC):
             *astuple(params)
         )
         
-        print(f"Transcribed result: {result}")
         
         if params.is_diarize:
             result, elapsed_time_diarization = self.diarizer.run(
@@ -259,7 +258,7 @@ class WhisperBase(ABC):
                         progress,
                         *whisper_params,
                     )
-                    print(f"Transcribed segments: {transcribed_segments}")
+
                 except Exception as e:
                     print(f"Error running transcription for file {file.name}: {e}")
                     continue
