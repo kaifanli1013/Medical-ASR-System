@@ -65,89 +65,90 @@ class FasterWhisperInference(WhisperBase):
 
         params.suppress_tokens = self.format_suppress_tokens_str(params.suppress_tokens)
         
-        # online_model = online_model_init(
-        #     asr = self.model,
-        #     language=params.lang,
-        # )
+        self.model.sep = ""
+        online_model = OnlineASRProcessor(self.model)
         
-        # args = {
-        #     "language": params.lang,
-        #     "task": "translate" if params.is_translate and self.current_model_size in self.translatable_models else "transcribe",
-        #     "beam_size": params.beam_size,
-        #     "log_prob_threshold": params.log_prob_threshold,
-        #     "no_speech_threshold": params.no_speech_threshold,
-        #     "best_of": params.best_of,
-        #     "patience": params.patience,
-        #     "temperature": params.temperature,
-        #     "compression_ratio_threshold": params.compression_ratio_threshold,
-        #     "length_penalty": params.length_penalty,
-        #     "repetition_penalty": params.repetition_penalty,
-        #     "no_repeat_ngram_size": params.no_repeat_ngram_size,
-        #     "prefix": params.prefix,
-        #     "suppress_blank": params.suppress_blank,
-        #     "suppress_tokens": params.suppress_tokens,
-        #     "max_initial_timestamp": params.max_initial_timestamp,
-        #     # "initial_prompt": params.initial_prompt if params.initial_prompt else None, # control by online_inference
-        #     "word_timestamps": True, #params.word_timestamps,
-        #     "prepend_punctuations": params.prepend_punctuations,
-        #     "append_punctuations": params.append_punctuations,
-        #     "max_new_tokens": params.max_new_tokens,
-        #     "chunk_length": params.chunk_length,
-        #     "hallucination_silence_threshold": params.hallucination_silence_threshold,
-        #     "hotwords": params.hotwords,
-        #     "language_detection_threshold": params.language_detection_threshold,
-        #     "language_detection_segments": params.language_detection_segments,
-        #     "prompt_reset_on_temperature": params.prompt_reset_on_temperature
-        # }
+        args = {
+            "language": params.lang,
+            "task": "translate" if params.is_translate and self.current_model_size in self.translatable_models else "transcribe",
+            "beam_size": params.beam_size,
+            "log_prob_threshold": params.log_prob_threshold,
+            "no_speech_threshold": params.no_speech_threshold,
+            "best_of": params.best_of,
+            "patience": params.patience,
+            "temperature": params.temperature,
+            "compression_ratio_threshold": params.compression_ratio_threshold,
+            "length_penalty": params.length_penalty,
+            "repetition_penalty": params.repetition_penalty,
+            "no_repeat_ngram_size": params.no_repeat_ngram_size,
+            "prefix": params.prefix,
+            "suppress_blank": params.suppress_blank,
+            "suppress_tokens": params.suppress_tokens,
+            "max_initial_timestamp": params.max_initial_timestamp,
+            # "initial_prompt": params.initial_prompt if params.initial_prompt else None, # control by online_inference
+            "word_timestamps": True, #params.word_timestamps,
+            "prepend_punctuations": params.prepend_punctuations,
+            "append_punctuations": params.append_punctuations,
+            "max_new_tokens": params.max_new_tokens,
+            "chunk_length": params.chunk_length,
+            "hallucination_silence_threshold": params.hallucination_silence_threshold,
+            "hotwords": params.hotwords,
+            "language_detection_threshold": params.language_detection_threshold,
+            "language_detection_segments": params.language_detection_segments,
+            "prompt_reset_on_temperature": params.prompt_reset_on_temperature
+        }
         
-        # segments_result = online_inference(
-        #     audio_file=audio,
-        #     online_model=online_model,
-        #     args=args,
-        # )
-        
-        # print(f'segments_result: {segments_result}')
-        print(f'params: {params}')
-        segments, info = self.model.transcribe(
-            audio=audio,
-            language=params.lang,
-            task="translate" if params.is_translate and self.current_model_size in self.translatable_models else "transcribe",
-            beam_size=params.beam_size,
-            log_prob_threshold=params.log_prob_threshold,
-            no_speech_threshold=params.no_speech_threshold,
-            best_of=params.best_of,
-            patience=params.patience,
-            temperature=params.temperature,
-            compression_ratio_threshold=params.compression_ratio_threshold,
-            length_penalty=params.length_penalty,
-            repetition_penalty=params.repetition_penalty,
-            no_repeat_ngram_size=params.no_repeat_ngram_size,
-            prefix=params.prefix,
-            suppress_blank=params.suppress_blank,
-            suppress_tokens=params.suppress_tokens,
-            max_initial_timestamp=params.max_initial_timestamp,
-            initial_prompt=params.initial_prompt if params.initial_prompt else None, 
-            word_timestamps=params.word_timestamps,
-            prepend_punctuations=params.prepend_punctuations,
-            append_punctuations=params.append_punctuations,
-            max_new_tokens=params.max_new_tokens,
-            chunk_length=params.chunk_length,
-            hallucination_silence_threshold=params.hallucination_silence_threshold,
-            hotwords=params.hotwords,
-            language_detection_threshold=params.language_detection_threshold,
-            language_detection_segments=params.language_detection_segments,
-            prompt_reset_on_temperature=params.prompt_reset_on_temperature
+        segments, info = online_inference(
+            audio_file=audio,
+            online_model=online_model,
+            args=args,
         )
+        
+        # segments, info = self.model.transcribe(
+        #     audio=audio,
+        #     language=params.lang,
+        #     task="translate" if params.is_translate and self.current_model_size in self.translatable_models else "transcribe",
+        #     beam_size=params.beam_size,
+        #     log_prob_threshold=params.log_prob_threshold,
+        #     no_speech_threshold=params.no_speech_threshold,
+        #     best_of=params.best_of,
+        #     patience=params.patience,
+        #     temperature=params.temperature,
+        #     compression_ratio_threshold=params.compression_ratio_threshold,
+        #     length_penalty=params.length_penalty,
+        #     repetition_penalty=params.repetition_penalty,
+        #     no_repeat_ngram_size=params.no_repeat_ngram_size,
+        #     prefix=params.prefix,
+        #     suppress_blank=params.suppress_blank,
+        #     suppress_tokens=params.suppress_tokens,
+        #     max_initial_timestamp=params.max_initial_timestamp,
+        #     initial_prompt=params.initial_prompt if params.initial_prompt else None, 
+        #     word_timestamps=params.word_timestamps,
+        #     prepend_punctuations=params.prepend_punctuations,
+        #     append_punctuations=params.append_punctuations,
+        #     max_new_tokens=params.max_new_tokens,
+        #     chunk_length=params.chunk_length,
+        #     hallucination_silence_threshold=params.hallucination_silence_threshold,
+        #     hotwords=params.hotwords,
+        #     language_detection_threshold=params.language_detection_threshold,
+        #     language_detection_segments=params.language_detection_segments,
+        #     prompt_reset_on_temperature=params.prompt_reset_on_temperature
+        # )
         progress(0, desc="Loading audio..")
 
-        print(segments)
         segments_result = []
+        # for segment in segments:
+        #     progress(segment.start / info.duration, desc="Transcribing..")
+        #     segments_result.append({
+        #         "start": segment.start,
+        #         "end": segment.end,
+        #         "text": segment.text
+        #     })
         for segment in segments:
-            progress(segment.start / info.duration, desc="Transcribing..")
             segments_result.append({
-                "start": segment.start,
-                "end": segment.end,
-                "text": segment.text
+                "start": segment[0],
+                "end": segment[1],
+                "text": segment[2],
             })
 
         print(f'segments_result: {segments_result}')
