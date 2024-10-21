@@ -15,6 +15,6 @@ with gr.Blocks() as demo:
     run_button = gr.Button("Start Task")
     
     # 绑定回调函数，将结果逐步显示在output_box
-    run_button.click(fn=long_running_task, outputs=output_box, streaming=True)
+    run_button.click(fn=long_running_task, outputs=output_box, stream=True)
 
 demo.launch()
