@@ -258,8 +258,7 @@ class OnlineASRProcessor:
         try:
             res, info = self.asr.transcribe(self.audio_buffer, initial_prompt=prompt, **args)
             res = list(res)
-            print(f"res: {res}")
-            # print(f"Transcription result: {res}")
+
         except Exception as e:
             print(f"Error during transcription: {e}")
             return (None, None, "")

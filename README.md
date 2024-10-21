@@ -52,6 +52,9 @@
   - 提供电子病历表格的下载
   - Online:
     - 目前online的duration测量，一律基于采样率16000Hz
+    - 调整输出
+      - 添加一个窗口可以实时的查看terminal中的输出结果
+      - 输出结果目前是独立的单词或者连续的句子，需要分割
 - Diarization
 
   - ~~提供UI接口来调整speaker-diarization模型所能识别的最小和最大人数~~
