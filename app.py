@@ -159,7 +159,7 @@ class App:
             dd_diarization_device = gr.Dropdown(label="Device",
                                                 # choices=self.whisper_inf.diarizer.get_available_device(),
                                                 # FIXME: default device is on cpu
-                                                choices=["cpu", 'mps'],
+                                                choices=["cpu", "cuda"],
                                                 value=self.whisper_inf.diarizer.get_device())
             
             # add diarization parameters

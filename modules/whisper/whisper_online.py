@@ -52,9 +52,13 @@ def online_inference(audio_file, online_model, args):
     SAMPLING_RATE = default_args_instance.sampling_rate
     
     # duration of the audio file
-    duration = len(load_audio(audio_file)) / SAMPLING_RATE
-    print("Audio duration is %2.2f seconds" % duration)
-
+    try:
+        duration = len(load_audio(audio_file)) / SAMPLING_RATE
+        print("Audio duration is %2.2f seconds" % duration)
+    except Exception as e:
+        print(f"Error in loading audio file: {e}")
+        return None
+    
     min_chunk = default_args_instance.min_chunk_size # Minimum audio chunk size in seconds. It waits up to this time to do processing. If the processing takes shorter time, it waits, otherwise it processes the whole segment that was received by this time.
     
     start = default_args_instance.start_at # start time of the processing in audio file
@@ -110,7 +114,10 @@ def online_inference(audio_file, online_model, args):
 
 @lru_cache
 def load_audio(fname):
-    a, _ = librosa.load(fname, sr=16000, dtype=np.float32)
+    try:
+        a, _ = librosa.load(fname, sr=16000, dtype=np.float32)
+    except Exception as e:
+        print(f"Error in loading audio file: {e}")
     return a
 
 def load_audio_chunk(fname, start, end):

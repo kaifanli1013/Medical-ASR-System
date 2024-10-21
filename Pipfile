@@ -26,6 +26,7 @@ librosa = "*"
 torchaudio = "*"
 wtpsplit = "*"
 soundfile = "*"
+ffmpeg = "*"
 
 [dev-packages]
 

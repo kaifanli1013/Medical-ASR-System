@@ -67,7 +67,7 @@ class FasterWhisperInference(WhisperBase):
         
         self.model.sep = ""
         online_model = OnlineASRProcessor(self.model)
-        
+        print("online_model", online_model)
         args = {
             "language": params.lang,
             "task": "translate" if params.is_translate and self.current_model_size in self.translatable_models else "transcribe",
@@ -97,7 +97,7 @@ class FasterWhisperInference(WhisperBase):
             "language_detection_segments": params.language_detection_segments,
             "prompt_reset_on_temperature": params.prompt_reset_on_temperature
         }
-        
+        print("args", args)
         segments, info = online_inference(
             audio_file=audio,
             online_model=online_model,
