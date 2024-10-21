@@ -74,7 +74,9 @@ class App:
                                   value="Automatic Detection", label="Language")
             dd_file_format = gr.Dropdown(choices=["SRT", "WebVTT", "txt"], value="SRT", label="File Format")
         with gr.Row():
-            cb_enable_online_inference = gr.Checkbox(value=False, label="Enable Online Inference", interactive=True)
+            cb_enable_online_inference = gr.Checkbox(value=False, label="Enable Online Inference?", interactive=True)
+        with gr.Row():
+            cb_enable_streaming_microphone = gr.Checkbox(value=False, label="Enable Streaming Mode for Microphone?", interactive=True)
         with gr.Row():
             cb_translate = gr.Checkbox(value=False, label="Translate to English?", interactive=True)
         with gr.Row():
@@ -198,6 +200,7 @@ class App:
                 
                 # Online inference
                 enable_online_inference=cb_enable_online_inference,
+                enable_streaming_microphone=cb_enable_streaming_microphone,
             ),
             dd_file_format,
             cb_timestamp
@@ -318,11 +321,16 @@ class App:
                 #     btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
 
                 with gr.TabItem("Mic"):  # tab3
+
                     with gr.Row():
                         mic_input = gr.Microphone(label="Record with Mic", type="filepath", interactive=True, streaming=False)
-
+                        realtime_transcription = gr.Textbox(label="Real-time Transcription",
+                            # value=current_result(),
+                            every=1,
+                            # info="当前时间",
+                        )
                     whisper_params, dd_file_format, cb_timestamp = self.create_whisper_parameters()
-
+                    
                     with gr.Row():
                         btn_run = gr.Button("GENERATE SUBTITLE FILE", variant="primary")
                     with gr.Row():
@@ -363,6 +371,7 @@ class App:
                     
                     params = [mic_input, dd_file_format]
 
+                    # button click event can only process full audio file    
                     btn_run.click(fn=self.whisper_inf.transcribe_mic,
                                   inputs=params + whisper_params.as_list(),
                                   outputs=[tb_indicator, files_subtitles])

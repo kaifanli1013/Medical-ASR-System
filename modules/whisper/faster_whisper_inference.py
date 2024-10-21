@@ -69,7 +69,10 @@ class FasterWhisperInference(WhisperBase):
             
             self.model.sep = ""
             online_model = OnlineASRProcessor(self.model)
-
+            
+            if params.enable_streaming_microphone:
+                pass
+            
             args = {
             "language": params.lang,
             "task": "translate" if params.is_translate and self.current_model_size in self.translatable_models else "transcribe",

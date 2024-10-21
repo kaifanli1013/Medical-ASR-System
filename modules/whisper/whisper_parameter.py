@@ -54,6 +54,7 @@ class WhisperParameters:
     
     # Online Inference
     enable_online_inference: gr.Checkbox
+    enable_streaming_microphone: gr.Checkbox
     """
     A data class for Gradio components of the Whisper Parameters. Use "before" Gradio pre-processing.
     This data class is used to mitigate the key-value problem between Gradio components and function parameters.
@@ -219,6 +220,9 @@ class WhisperParameters:
         
     online_inference:
         This parameter is related to faster-whisper. Boolean value that determines whether to use online inference or not.
+        
+    streaming_microphone
+        This parameter is related to faster-whisper. Boolean value that determines whether to use streaming microphone or not.
     """
 
     def as_list(self) -> list:
@@ -292,6 +296,7 @@ class WhisperValues:
     language_detection_threshold: Optional[float]
     language_detection_segments: int
     enable_online_inference: bool
+    enable_streaming_microphone: bool
     """
     A data class to use Whisper parameters.
     """

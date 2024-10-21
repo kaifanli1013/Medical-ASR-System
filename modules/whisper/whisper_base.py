@@ -2,6 +2,7 @@ import os
 import torch
 import whisper
 import gradio as gr
+import librosa
 from abc import ABC, abstractmethod
 from typing import BinaryIO, Union, Tuple, List
 import numpy as np
@@ -238,6 +239,8 @@ class WhisperBase(ABC):
             )
             progress(1, desc="Completed!")
 
+            print(transcribed_segments)
+            
             subtitle, result_file_path = self.generate_and_write_file(
                 file_name="Mic",
                 transcribed_segments=transcribed_segments,
@@ -248,6 +251,83 @@ class WhisperBase(ABC):
 
             result_str = f"Done in {self.format_time(time_for_task)}! Subtitle file is in the outputs folder.\n\n{subtitle}"
             return [result_str, result_file_path]
+        except Exception as e:
+            print(f"Error transcribing file: {e}")
+        finally:
+            self.release_cuda_memory()
+            self.remove_input_files([mic_audio])
+            
+    def transcribe_mic_streaming(self,
+                       mic_audio: str,
+                       file_format: str,
+                       state: gr.State,
+                       progress=gr.Progress(),
+                       *whisper_params,
+                       ) -> list:
+        """
+        Write subtitle file from microphone
+
+        Parameters
+        ----------
+        mic_audio: str
+            Audio file path from gr.Microphone()
+        file_format: str
+            Subtitle File format to write from gr.Dropdown(). Supported format: [SRT, WebVTT, txt]
+        progress: gr.Progress
+            Indicator to show progress directly in gradio.
+        *whisper_params: tuple
+            Parameters related with whisper. This will be dealt with "WhisperParameters" data class
+
+        Returns
+        ----------
+        result_str:
+            Result of transcription to return to gr.Textbox()
+        result_file_path:
+            Output file path to return to gr.Files()
+        """
+        try:
+            progress(0, desc="Loading Audio..")
+            print(f'Current state: {state}')
+            print(f'Current mic_audio: {mic_audio}')
+            try:
+                print(os.path.getsize(mic_audio)) 
+                sr, y = librosa.load(mic_audio, sr=16000, dtype=np.float32)
+                print(f'Current sr: {sr}')
+                print(f'duration: {len(y)/sr}')
+            except Exception as e:
+                print(f"Error loading audio: {e}")
+            
+            # Convert to mono if stereo
+            if y.ndim > 1:
+                y = y.mean(axis=1)
+                
+            y = y.astype(np.float32)
+            y /= np.max(np.abs(y))            
+            
+            if state is not None:
+                stream = np.concatenate([stream, y])
+            else:
+                stream = y
+                
+            transcribed_segments, time_for_task = self.run(
+                stream,
+                progress,
+                *whisper_params,
+            )
+            progress(1, desc="Completed!")
+
+            print(transcribed_segments)
+            
+            subtitle, result_file_path = self.generate_and_write_file(
+                file_name="Mic",
+                transcribed_segments=transcribed_segments,
+                add_timestamp=True,
+                file_format=file_format,
+                output_dir=self.output_dir
+            )
+
+            result_str = f"Done in {self.format_time(time_for_task)}! Subtitle file is in the outputs folder.\n\n{subtitle}"
+            return [stream, result_str]
         except Exception as e:
             print(f"Error transcribing file: {e}")
         finally:

@@ -57,19 +57,23 @@
     - 目前online的duration测量，一律基于采样率16000Hz
     - 调整输出
       - ~~添加一个窗口可以实时的查看terminal中的输出结果~~
-      - 输出结果目前是独立的单词或者连续的句子，需要分割
+      - ~~输出结果目前是独立的单词或者连续的句子，需要分割~~
+      
 - Diarization
 
   - ~~提供UI接口来调整speaker-diarization模型所能识别的最小和最大人数~~
     - ~~UI界面添加slider~~
     - ~~模型初始化添加字段~~
+
 - Translation
 
   - 现在只支持 其他语言-> EN
   - 
+
 - Gradio
 
   - 重载模式: https://www.gradio.app/guides/developing-faster-with-reload-mode
+
 - Open AI
 
   - 添加电子病历生成功能
@@ -77,13 +81,17 @@
     - 电子病历文本标准化
   - 基于相似度的电子病历查询对话匹配功能
   - 是否应该当作NER任务呢
+
 - SIP3 API
 
   - 现在norm方法存在问题
+
 - UI
 
   - 自动将SPEAKER_N转化为患者或医生
   - 对患者和医生的对话框进行区分
   - 提供EMR table的可编辑功能
+
 - Mic
+
 - QR Code
