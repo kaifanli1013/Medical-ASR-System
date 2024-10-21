@@ -91,9 +91,9 @@ def online_inference(audio_file, online_model, args):
             return None
         else:
             try:
-                print('Passed the assertion.')
                 output_transcript(output, start_time)
-                print('Transcript output successfully.')
+                if output[2]:
+                    online_model.final_results.append(output)
             except Exception as e:
                 print(f"Error in outputting transcript: {e}")
                 return None
@@ -107,10 +107,12 @@ def online_inference(audio_file, online_model, args):
     o = online_model.finish()
     output_transcript(o, start_time, now)
 
-    result = online_model.commited.copy() 
-    result.extend(online_model.transcript_buffer.complete())
+    # result = online_model.commited.copy() 
+    # result.extend(online_model.transcript_buffer.complete())
+
+    online_model.final_results.extend([o])
     
-    return result, duration
+    return online_model.final_results, duration
 
 @lru_cache
 def load_audio(fname):
@@ -210,6 +212,7 @@ class OnlineASRProcessor:
         self.asr = asr
         self.init()
         self.buffer_trimming_sec = buffer_trimming_sec
+        self.final_results = []
 
     def init(self, offset=None):
         """run this when starting or restarting processing"""
@@ -275,7 +278,6 @@ class OnlineASRProcessor:
             self.transcript_buffer.insert(tsw, self.buffer_time_offset)
             o = self.transcript_buffer.flush() # return commited chunk
             self.commited.extend(o)
-            print(f"Inserted and flushed transcript: {o}")
         except Exception as e:
             print(f"Error processing transcript buffer: {e}")
             return (None, None, "")

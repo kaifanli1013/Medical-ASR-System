@@ -51,6 +51,9 @@ class WhisperParameters:
     hotwords: gr.Textbox
     language_detection_threshold: gr.Number
     language_detection_segments: gr.Number
+    
+    # Online Inference
+    enable_online_inference: gr.Checkbox
     """
     A data class for Gradio components of the Whisper Parameters. Use "before" Gradio pre-processing.
     This data class is used to mitigate the key-value problem between Gradio components and function parameters.
@@ -213,6 +216,9 @@ class WhisperParameters:
 
     language_detection_segments:
         This parameter is related to faster-whisper. Number of segments to consider for the language detection.
+        
+    online_inference:
+        This parameter is related to faster-whisper. Boolean value that determines whether to use online inference or not.
     """
 
     def as_list(self) -> list:
@@ -285,6 +291,7 @@ class WhisperValues:
     hotwords: Optional[str]
     language_detection_threshold: Optional[float]
     language_detection_segments: int
+    enable_online_inference: bool
     """
     A data class to use Whisper parameters.
     """

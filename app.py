@@ -73,6 +73,8 @@ class App:
                                   value="Automatic Detection", label="Language")
             dd_file_format = gr.Dropdown(choices=["SRT", "WebVTT", "txt"], value="SRT", label="File Format")
         with gr.Row():
+            cb_enable_online_inference = gr.Checkbox(value=False, label="Enable Online Inference", interactive=True)
+        with gr.Row():
             cb_translate = gr.Checkbox(value=False, label="Translate to English?", interactive=True)
         with gr.Row():
             cb_timestamp = gr.Checkbox(value=True, label="Add a timestamp to the end of the filename",
@@ -191,7 +193,10 @@ class App:
                 hallucination_silence_threshold=nb_hallucination_silence_threshold, hotwords=tb_hotwords,
                 language_detection_threshold=nb_language_detection_threshold,
                 language_detection_segments=nb_language_detection_segments,
-                prompt_reset_on_temperature=sld_prompt_reset_on_temperature
+                prompt_reset_on_temperature=sld_prompt_reset_on_temperature,
+                
+                # Online inference
+                enable_online_inference=cb_enable_online_inference,
             ),
             dd_file_format,
             cb_timestamp
@@ -297,7 +302,7 @@ class App:
 
                 with gr.TabItem("Mic"):  # tab3
                     with gr.Row():
-                        mic_input = gr.Microphone(label="Record with Mic", type="filepath", interactive=True)
+                        mic_input = gr.Microphone(label="Record with Mic", type="filepath", interactive=True, streaming=False)
 
                     whisper_params, dd_file_format, cb_timestamp = self.create_whisper_parameters()
 
