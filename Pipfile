@@ -9,24 +9,25 @@ verify_ssl = true
 name = "downloadpytorch"
 
 [packages]
-torch = "*"
-faster-whisper = "==1.0.3"
+torch = "==2.0.1"
+faster-whisper = "*"
 transformers = "*"
 gradio = "*"
 pytube = "*"
 "pyannote.audio" = "==3.3.1"
 pysrt = "*"
 openai-whisper = {git = "https://github.com/jhj0517/jhj0517-whisper.git"}
-qrcode = {extras = ["pil"], version = "*"}
+qrcode = "*"
 ipython = "*"
 openai = "*"
 tenacity = "*"
 termcolor = "*"
 librosa = "*"
-torchaudio = "*"
+torchaudio = "==2.2.0"
 wtpsplit = "*"
 soundfile = "*"
 ffmpeg = "*"
+trochvision = "==0.17.0"
 
 [dev-packages]
 
