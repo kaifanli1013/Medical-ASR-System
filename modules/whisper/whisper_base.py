@@ -170,8 +170,6 @@ class WhisperBase(ABC):
                     progress,
                     *whisper_params,
                 )
-
-                print(f"Transcribed segments: {transcribed_segments}")
                 
                 file_name, file_ext = os.path.splitext(os.path.basename(file.name))
                 file_name = safe_filename(file_name)

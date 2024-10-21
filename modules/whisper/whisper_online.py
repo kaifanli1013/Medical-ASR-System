@@ -5,6 +5,32 @@ from functools import lru_cache
 import librosa
 from dataclasses import dataclass
 
+# FIXME:FOR TESTING
+final_result = []
+
+
+def timeformat_srt(time):
+    hours = time // 3600
+    minutes = (time - hours * 3600) // 60
+    seconds = time - hours * 3600 - minutes * 60
+    milliseconds = (time - int(time)) * 1000
+    return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d},{int(milliseconds):03d}"
+
+def current_result():
+    def inner():
+        output = ""
+        for i, segment in enumerate(final_result):
+            try:
+                output += f"{i + 1}\n"
+                output += f"{timeformat_srt(segment['start'])} --> {timeformat_srt(segment['end'])}\n"
+                if segment['text'].startswith(' '):
+                    segment['text'] = segment['text'][1:]
+                output += f"{segment['text']}\n\n"
+            except Exception as e:
+                print(f"Error in current_result: {current_result}")
+        return output
+    return inner
+
 # TODO: we need a better way to handle the default args
 @dataclass
 class default_args:
@@ -47,7 +73,7 @@ def output_transcript(o, start, now=None):
         
 
 def online_inference(audio_file, online_model, args):
-
+    
     # sampling rate for the audio file
     SAMPLING_RATE = default_args_instance.sampling_rate
     
@@ -94,6 +120,13 @@ def online_inference(audio_file, online_model, args):
                 output_transcript(output, start_time)
                 if output[2]:
                     online_model.final_results.append(output)
+                    # FIXIME
+                    temp = {
+                        "start": output[0],
+                        "end": output[1],
+                        "text": output[2]
+                    }
+                    final_result.append(temp)
             except Exception as e:
                 print(f"Error in outputting transcript: {e}")
                 return None
@@ -110,8 +143,16 @@ def online_inference(audio_file, online_model, args):
     # result = online_model.commited.copy() 
     # result.extend(online_model.transcript_buffer.complete())
 
-    online_model.final_results.extend([o])
-    
+    if o[2]:
+        online_model.final_results.extend([o])
+        
+        temp = {
+            "start": o[0],
+            "end": o[1],
+            "text": o[2]
+        }
+        final_result.append(temp)
+
     return online_model.final_results, duration
 
 @lru_cache
@@ -406,3 +447,5 @@ class OnlineASRProcessor:
             b = offset + sents[0][0]
             e = offset + sents[-1][1]
         return (b,e,t)
+    
+

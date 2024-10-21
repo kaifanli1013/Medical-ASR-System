@@ -13,6 +13,7 @@ from modules.utils.qr_generate import generate_qr_code
 from modules.translation.deepl_api import DeepLAPI
 from modules.whisper.whisper_parameter import *
 from modules.normalization.sip3_api import SIP3API
+from modules.whisper.whisper_online import current_result
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -211,6 +212,22 @@ class App:
                 with gr.TabItem("File"):  # tab1
                     with gr.Column():
                         input_file = gr.Files(type="filepath", label="Upload File here")
+
+                        def process_and_display_video(files):
+                            # files 是一个文件路径列表 (list of files)
+                            if files:  # 检查是否有文件上传
+                                video_path = files[0].name  # 假设只播放第一个文件
+                                return video_path
+                            return None  # 如果没有上传视频，返回 None
+                        with gr.Row():
+                            video_display = gr.Video(label="Video Display", width=360, height=640)
+                            input_file.upload(fn=process_and_display_video, inputs=input_file, outputs=video_display)
+                            realtime_transcription = gr.Textbox(label="Real-time Transcription",
+                                value=current_result(),
+                                every=1,
+                                # info="当前时间",
+                            )
+                            
                         tb_input_folder = gr.Textbox(label="Input Folder Path (Optional)",
                                                      info="Optional: Specify the folder path where the input files are located, if you prefer to use local files instead of uploading them."
                                                           " Leave this field empty if you do not wish to use a local path.",

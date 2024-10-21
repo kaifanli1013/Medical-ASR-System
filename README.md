@@ -56,7 +56,7 @@
     - 目前只修改了faster-whisper的功能
     - 目前online的duration测量，一律基于采样率16000Hz
     - 调整输出
-      - 添加一个窗口可以实时的查看terminal中的输出结果
+      - ~~添加一个窗口可以实时的查看terminal中的输出结果~~
       - 输出结果目前是独立的单词或者连续的句子，需要分割
 - Diarization
 
