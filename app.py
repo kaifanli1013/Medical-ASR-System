@@ -321,14 +321,20 @@ class App:
                 #     btn_openfolder.click(fn=lambda: self.open_folder("outputs"), inputs=None, outputs=None)
 
                 with gr.TabItem("Mic"):  # tab3
-
+                    # with gr.Row()
+                    #     audio_interface = gr.Interface(
+                    #         transcribe,
+                    #         gr.Audio(sources=["microphone"], streaming=True),
+                    #         gr.Textbox(label="Transcription", type="auto", live=True),
+                    #         live=True,
+                    #     )
                     with gr.Row():
                         mic_input = gr.Microphone(label="Record with Mic", type="filepath", interactive=True, streaming=False)
-                        realtime_transcription = gr.Textbox(label="Real-time Transcription",
-                            # value=current_result(),
-                            every=1,
-                            # info="当前时间",
-                        )
+                        # realtime_transcription = gr.Textbox(label="Real-time Transcription",
+                        #     # value=current_result(),
+                        #     every=1,
+                        #     # info="当前时间",
+                        # )
                     whisper_params, dd_file_format, cb_timestamp = self.create_whisper_parameters()
                     
                     with gr.Row():
@@ -492,7 +498,7 @@ class App:
 parser = argparse.ArgumentParser()
 parser.add_argument('--whisper_type', type=str, default="faster-whisper",
                     help='A type of the whisper implementation between: ["whisper", "faster-whisper", "insanely-fast-whisper"]')
-parser.add_argument('--share', type=bool, default=False, nargs='?', const=True, help='Gradio share value')
+parser.add_argument('--share', type=bool, default=True, nargs='?', const=True, help='Gradio share value')
 parser.add_argument('--server_name', type=str, default=None, help='Gradio server host')
 parser.add_argument('--server_port', type=int, default=None, help='Gradio server port')
 parser.add_argument('--root_path', type=str, default=None, help='Gradio root path')
