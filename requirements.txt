@@ -16,3 +16,4 @@ wtpsplit
 soundfile
 ffmpeg 
 pyannote.audio==3.3.1
+rouge
