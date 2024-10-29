@@ -9,10 +9,6 @@ from rouge import Rouge
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from transformers import pipeline
 
-if not os.path.exists('./output'):
-    os.makedirs('./output')
-logging.basicConfig(filename='./output/results.log', level=logging.INFO, format='%(message)s', filemode='w')
-
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 one_shot_examples = """
@@ -186,16 +182,16 @@ def show_metrics(result_list: list, ground_truth: list):
         
     
 if __name__ == "__main__":
-    if not os.path.exists('./output'):
-        os.makedirs('./output')
-    logging.basicConfig(filename='./output/results.log', level=logging.INFO, format='%(message)s', filemode='w')
 
     args = argparse.ArgumentParser()
     args.add_argument("--model_type", type=str, choices=["meta", "rinna"], default="meta", help="Choose model type, default is 'meta'")
-    args.add_argument("--model_size", type=str, choices=["1B", "3B"], default="3B", help="Choose model size, default is '1B'")
+    args.add_argument("--model_size", type=str, choices=["1B", "3B", "8B"], default="3B", help="Choose model size, default is '1B'")
     args.add_argument("--few_shot", type=str, choices=['0-shot', '1-shot', '5-shot', '10-shot', '20-shot'], default='0-shot', help="Enable few-shot learning, default is False")
     args.add_argument("--use_memory", type=bool, default=False, help="Use memory, default is False")
     args = args.parse_args()
+    
+    logging_file = args.model_type + "_" + args.model_size + "_" + args.few_shot + ".log"
+    logging.basicConfig(filename=f'./output/{logging_file}', level=logging.INFO, format='%(message)s', filemode='w')
     
     # load model
     if args.model_type == "meta":
