@@ -5,6 +5,8 @@ import torch
 import pandas as pd
 import textstat
 import logging
+from rouge import Rouge
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from transformers import pipeline
 
 if not os.path.exists('./output'):
@@ -13,24 +15,64 @@ logging.basicConfig(filename='./output/results.log', level=logging.INFO, format=
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
+one_shot_examples = """
+    以下は、いくつの例です。これらの例は、入力文と出力の例を示しています。これらの例は、入力文から医療情報を抽出する方法を示しています。
+    例1:
+        入力: 最近、体がむくんでいる感じがして、疲れやすくなりました。特に朝起きたときに顔が腫れていることが多いです。
+        出力: 現病歴:\\n-体のむくみと疲労感\\n-朝の顔の腫れ
+"""
+
 five_shot_examples = """
     以下は、いくつの例です。これらの例は、入力文と出力の例を示しています。これらの例は、入力文から医療情報を抽出する方法を示しています。
     例1:
-        入力: 最近、すごく喉が渇いて、水をたくさん飲んでしまいます。そのためにトイレに行く回数も増えて、疲れやすくなっています。
-        出力: 現病歴:\\n-頻繁な喉の渇きと頻尿
-    例2:
-        入力: はい、体重が急に減りましたし、時々手足が震える感じもあります。
-        出力: 現病歴:\\n-体重減少と疲労感\\n-時々の手足の震え
-    例3:
-        入力: 最近、胸にしこりを感じるようになって、痛みも少しあります。心配になって病院に来ました。
-        出力: 現病歴:\\n-乳房にしこりを感じる
-    例4:
-        入力: こんにちは。今日はどのようなご相談ですか？
-        出力: -
-        補足説明: 医療情報が含まれていないため、出力は「-」としてください。
-    例5:
+        入力: 最近、体がむくんでいる感じがして、疲れやすくなりました。特に朝起きたときに顔が腫れていることが多いです。
+        出力: 現病歴:\\n-体のむくみと疲労感\\n-朝の顔の腫れ
+    例2:    
         入力: はい、尿の量が減って、色も濃くなってきました。夜間にもトイレに行く回数が増えました。
         出力: 現病歴:\\n-尿量減少、尿色の濃化、頻尿、夜間尿
+    例3:
+        入力: いいえ、特にありませんが、高血圧の治療は受けています。
+        出力: 既往歴:\\n-高血圧
+    例4:
+        入力: 最近、息切れがひどくなって、特に運動したり階段を上ったりすると息苦しくなります。それに、咳も増えました。
+        出力: 現病歴:\\n-最近の息切れの悪化
+    例5:
+        入力: なるほど。1型糖尿病の可能性がありますね。血液検査をして、血糖値とHbA1cを確認しましょう。また、インスリンの自己注射についても学んでいただく必要があります。
+        出力: 診断:\\n-1型糖尿病
+"""
+
+ten_shot_examples = """
+    以下は、いくつの例です。これらの例は、入力文と出力の例を示しています。これらの例は、入力文から医療情報を抽出する方法を示しています。
+    例1:
+        入力: 最近、体がむくんでいる感じがして、疲れやすくなりました。特に朝起きたときに顔が腫れていることが多いです。
+        出力: 現病歴:\\n-体のむくみと疲労感\\n-朝の顔の腫れ
+    例2:    
+        入力: はい、尿の量が減って、色も濃くなってきました。夜間にもトイレに行く回数が増えました。
+        出力: 現病歴:\\n-尿量減少、尿色の濃化、頻尿、夜間尿
+    例3:
+        入力: いいえ、特にありませんが、高血圧の治療は受けています。
+        出力: 既往歴:\\n-高血圧
+    例4:
+        入力: 最近、息切れがひどくなって、特に運動したり階段を上ったりすると息苦しくなります。それに、咳も増えました。
+        出力: 現病歴:\\n-最近の息切れの悪化
+    例5:
+        入力: なるほど。1型糖尿病の可能性がありますね。血液検査をして、血糖値とHbA1cを確認しましょう。また、インスリンの自己注射についても学んでいただく必要があります。
+        出力: 診断:\\n-1型糖尿病
+    例6:
+        入力: はい、父親が糖尿病でした。
+        出力: 家族歴:\\n-父親が糖尿病
+    例7:
+        入力: わかりました。冠動脈性心疾患の可能性がありますね。まずは心電図と血液検査を行い、必要に応じてストレステストや冠動脈造影検査を行いましょう。
+        出力: 診断:\\n-冠動脈性心疾患の疑い\\n治療方針:\\n-心電図と血液検査の結果に基づき、さらにストレステストや冠動脈造影検査を実施\\n-症状に応じて薬物療法\\n-生活習慣の改善
+    例8:
+        入力: 食事はあまり気にしていませんが、油っこいものが好きです。運動はほとんどしていません。
+        出力: 生活習慣:\\n-食事:油っこいものが好きで、食生活に注意を払っていない\\n運動:ほとんどしていない
+    例9:
+        入力: はい、時々吐き気がして、黒っぽい便が出ることもあります。
+        出力: 現病歴:\\n-時々の吐き気と黒い便
+    例10:
+        入力: 乳頭からの分泌物はないですが、しこりの周りの皮膚が少し赤くなっている気がします。
+        出力: 現病歴:\\n-しこり周囲の皮膚に赤みあり
 """
 
 system_prompt_json_format = """
@@ -88,7 +130,9 @@ def post_process(output: dict):
         final_output = "-"
     return final_output
 
-def show_metrics(result_list: list):
+def show_metrics(result_list: list, ground_truth: list):
+    
+    logging.info("Showing readability scores for generated text:")
     fk_score_avg = 0
     smog_score_avg = 0
     dale_chall_score_avg = 0
@@ -110,15 +154,47 @@ def show_metrics(result_list: list):
     logging.info(f"SMOG Score: {smog_score_avg}")
     logging.info(f"Dale Chall Score: {dale_chall_score_avg}")
     
-    return (fk_score_avg, smog_score_avg, dale_chall_score_avg)
+    readibility_scores = {
+        "fk_score_avg": fk_score_avg,
+        "smog_score_avg": smog_score_avg,
+        "dale_chall_score_avg": dale_chall_score_avg
+    }
+    
+    logging.info("\n")
+    logging.info("Showing Adequacy scores for generated text:")
+    
+    # rouge scores
+    rouge = Rouge()
+    rouge_scores = rouge.get_scores(result_list, ground_truth, avg=True)
+    logging.info(f"ROUGE Scores: {rouge_scores}")
+    
+    # BLEU scores
+    bleu_scores_avg = 0
+    smoothing = SmoothingFunction().method4
+    for i in range(len(result_list)):
+        bleu_score = sentence_bleu([ground_truth[i]], result_list[i], smoothing_function=smoothing)
+        bleu_scores_avg += bleu_score
+    bleu_scores_avg /= len(result_list)
+    logging.info(f"BLEU Score: {bleu_scores_avg}")
+    
+    adequacy_scores = {
+        "rouge_scores": rouge_scores,
+        "bleu_scores_avg": bleu_scores_avg
+    }
+        
+    return readibility_scores, adequacy_scores
         
     
 if __name__ == "__main__":
+    if not os.path.exists('./output'):
+        os.makedirs('./output')
+    logging.basicConfig(filename='./output/results.log', level=logging.INFO, format='%(message)s', filemode='w')
+
     args = argparse.ArgumentParser()
-    args.add_argument("model_type", type=str, choices=["meta", "rinna"], nargs='?', default="meta", help="Choose model type, default is 'meta'")
-    args.add_argument("model_size", type=str, choices=["1B", "3B"], nargs='?', default="3B", help="Choose model size, default is '1B'")
-    args.add_argument("few_shot", type=str, choices=['0-shot', '1-shot', '5-shot', '10-shot', '20-shot'], nargs='?', default='0-shot', help="Enable few-shot learning, default is False")
-    args.add_argument("use_memory", type=bool, nargs='?', const=True, default=False, help="Use memory, default is False")
+    args.add_argument("--model_type", type=str, choices=["meta", "rinna"], default="meta", help="Choose model type, default is 'meta'")
+    args.add_argument("--model_size", type=str, choices=["1B", "3B"], default="3B", help="Choose model size, default is '1B'")
+    args.add_argument("--few_shot", type=str, choices=['0-shot', '1-shot', '5-shot', '10-shot', '20-shot'], default='0-shot', help="Enable few-shot learning, default is False")
+    args.add_argument("--use_memory", type=bool, default=False, help="Use memory, default is False")
     args = args.parse_args()
     
     # load model
@@ -147,14 +223,20 @@ if __name__ == "__main__":
     input_file = "./data/gpt_generated_medical_dialogue.xlsx"
     df = pd.read_excel(input_file)
 
-    ground_truth = df[8:]['report- text']
+    ground_truth = df[74:]['report-text']
     generated_text = []
     
-    if args.enable_few_shot:
+    if args.few_shot == "0-shot":
+        system_prompt_json_format += ""
+    elif args.few_shot == "1-shot":
+        system_prompt_json_format += one_shot_examples
+    elif args.few_shot == "5-shot":
         system_prompt_json_format += five_shot_examples
+    elif args.few_shot == "10-shot":
+        system_prompt_json_format += ten_shot_examples
         
-    for i, row in df[8:10].iterrows():
-        user_message = base_message + row['speech- text']
+    for i, row in df[74:].iterrows():
+        user_message = base_message + row['speech-text']
         messages = [
             {"role": "system", "content": system_prompt_json_format},
             {"role": "assistant", "content": user_message},
@@ -166,6 +248,7 @@ if __name__ == "__main__":
         )
 
         try:
+            # 尝试解析 JSON 数据
             output = json.loads(outputs[0]["generated_text"][-1]['content'])
             logging.info(f'Row: {i}')
             logging.info(f"input: {user_message}")
@@ -173,14 +256,19 @@ if __name__ == "__main__":
             logging.info(f"ground truth: {ground_truth[i]}")
             logging.info("\n")
             generated_text.append(post_process(output))
-        except:
+        except json.JSONDecodeError as e:
+            # 记录 JSON 解码错误的信息
+            logging.error(f"JSONDecodeError in row {i}: {e}")
+            logging.error(f"Raw output content: {outputs[0]['generated_text']}")  # 输出内容以便检查错误原因
             generated_text.append("-")
-            logging.DEBUG("Error in processing output")
-            logging.info(outputs[0]["generated_text"][-1]['content'])
-        
+        except Exception as e:
+            # 捕获其他异常并记录
+            logging.error(f"Unexpected error in row {i}: {e}")
+            generated_text.append("-")
     
-    logging.info("Readability scores for generated text:")
-    logging.info(show_metrics(generated_text))
+    logging.info(f'Generated text: {generated_text}')
+    logging.info(f'Ground truth: {ground_truth.tolist()}')
+    show_metrics(generated_text, ground_truth.tolist())
 
         
 
