@@ -230,7 +230,8 @@ if __name__ == "__main__":
         system_prompt_json_format += five_shot_examples
     elif args.few_shot == "10-shot":
         system_prompt_json_format += ten_shot_examples
-        
+    logging.info(f"System prompt: {system_prompt_json_format}")
+    
     for i, row in df[74:].iterrows():
         user_message = base_message + row['speech-text']
         messages = [
