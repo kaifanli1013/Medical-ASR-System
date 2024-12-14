@@ -18,8 +18,10 @@
 # audio, sr = load_audio("test.wav")
 # print(audio, sr)
 
-import os
-import nvidia.cublas.lib
-import nvidia.cudnn.lib
+from faster_whisper import WhisperModel
 
-print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))
+model = WhisperModel("large-v3")
+
+segments, info = model.transcribe("test01.wav")
+for segment in segments:
+    print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
